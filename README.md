@@ -3,8 +3,6 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 
 ## Features
 - Play chess with your friends in real-time
+- Bet on the outcome of the game
 - All moves are stored on-chain with LASR
-- No need to trust a central server
-- No need to trust your opponent
-- No need to trust the game creator
 
