@@ -1,0 +1,42 @@
+{
+  "contractInputs": "",
+  "op": "newGame",
+  "transaction": {
+    "from": "0x482830d7655fb8465a43844fc1530a7713781b49",
+    "nonce": "0x0000000000000000000000000000000000000000000000000000000000000018",
+    "op": "newGame",
+    "programId": "0x57234c52617e7ca8edc5577ebe3eb38d53a77607",
+    "to": "0x57234c52617e7ca8edc5577ebe3eb38d53a77607",
+    "transactionInputs": "{\"address1\":\"0x57234c52617e7ca8edc5577ebe3eb38d53a77607\",\"address2\":\"0x57234c52617e7ca8edc5577ebe3eb38d53a77607\"}",
+    "transactionType": {
+      "call": "0x0000000000000000000000000000000000000000000000000000000000000018"
+    },
+    "value": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "r": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+    "s": "0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321",
+    "v": 1
+  },
+  "version": 1,
+  "accountInfo": {
+    "accountType": {
+      "program": "0x57234c52617e7ca8edc5577ebe3eb38d53a77607"
+    },
+    "programNamespace": null,
+    "ownerAddress": "0x482830d7655fb8465a43844fc1530a7713781b49",
+    "programs": {
+    },
+    "nonce": "0x000000000000000000000000000000000000000000000000000000000000001c",
+    "programAccountData": {
+      "games": "{\"lalalala\":{\"from\":\"g2\",\"to\":\"g3\"}}"
+    },
+    "programAccountMetadata": {
+      "content_id": "bafyreidhfvw4jiqom72332brsln3micsa4b7grur4rixkwvyrh6u4i3ecy",
+      "initializedSupply": "1000000000000000000000000",
+      "name": "Anotha One",
+      "symbol": "LOVE",
+      "to": "0x57234c52617e7ca8edc5577ebe3eb38d53a77607",
+      "totalSupply": "1000000000000000000000000"
+    },
+    "programAccountLinkedPrograms": []
+  }
+}
