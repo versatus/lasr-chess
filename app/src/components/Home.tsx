@@ -30,36 +30,11 @@ const Home: FC = () => {
     approve,
   } = useChessAccount()
 
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [wager, setWager] = useState('0')
+
   const [isConnected, setIsConnected] = useState(false)
   const [transport, setTransport] = useState('N/A')
-
-  useEffect(() => {
-    if (socket.connected) {
-      onConnect()
-    }
-
-    function onConnect() {
-      setIsConnected(true)
-      setTransport(socket.io.engine.transport.name)
-
-      socket.io.engine.on('upgrade', (transport) => {
-        setTransport(transport.name)
-      })
-    }
-
-    function onDisconnect() {
-      setIsConnected(false)
-      setTransport('N/A')
-    }
-
-    socket.on('connect', onConnect)
-    socket.on('disconnect', onDisconnect)
-
-    return () => {
-      socket.off('connect', onConnect)
-      socket.off('disconnect', onDisconnect)
-    }
-  }, [])
 
   useEffect(() => {
     if (socket.connected) {
@@ -100,12 +75,13 @@ const Home: FC = () => {
   }, [chessAccount, address])
 
   const startNewGame = async () => {
-    await createNewGame()
+    await createNewGame(wager)
+    setShowCreateModal(false)
     socket.emit('createGame', address)
   }
 
-  const joinGame = async (gameId: string, address1: string) => {
-    await acceptGame(gameId, address1)
+  const joinGame = async (gameId: string, address1: string, wager: string) => {
+    await acceptGame(gameId, address1, wager)
     socket.emit('joinGame', gameId, address1)
   }
 
@@ -117,11 +93,14 @@ const Home: FC = () => {
     <>
       <Layout>
         <Navigation />
-        {/*<Modal*/}
-        {/*  title={'Create Game'}*/}
-        {/*  showModal={true}*/}
-        {/*  setShowModal={() => null}*/}
-        {/*/>*/}
+        <Modal
+          title={'New Game'}
+          showModal={showCreateModal}
+          setShowModal={setShowCreateModal}
+          wager={wager}
+          setWager={setWager}
+          startNewGame={startNewGame}
+        />
         <ProgramTitle
           title={'LASR CHESS'}
           subtitle={
@@ -183,8 +162,8 @@ const Home: FC = () => {
                   <div className={'font-black'}>GAME CENTER</div>
                   <div className={'grow'} />
                   <button
-                    onClick={startNewGame}
-                    className="bg-blue-500 text-white p-2 rounded"
+                    onClick={() => setShowCreateModal(true)}
+                    className="border border-blue-500 hover:bg-blue-500 transition-all text-white p-2 rounded"
                   >
                     Start New Game
                   </button>
@@ -207,6 +186,9 @@ const Home: FC = () => {
                         {games?.map((game: IGame) => {
                           const user1 = getUser(game.address1)
                           const user2 = getUser(game.address2)
+                          const winner = getUser(game.winnerAddress!)
+                          const moves = getFullmoveNumberFromFEN(game?.fen!)
+                          // @ts-ignore
                           return (
                             <div
                               key={game.gameId}
@@ -228,6 +210,14 @@ const Home: FC = () => {
                                     }
                                   >
                                     <span className={'font-black text-lg'}>
+                                      <span className={'text-3xl '}>
+                                        {winner?.address?.toLowerCase() ===
+                                        game?.address1?.toLowerCase()! ? (
+                                          <>👑</>
+                                        ) : (
+                                          ''
+                                        )}
+                                      </span>{' '}
                                       {user1?.username}
                                     </span>
                                     <span className={'text-xs italic'}>
@@ -241,7 +231,17 @@ const Home: FC = () => {
                                     }
                                   >
                                     <span className={'font-black text-lg'}>
-                                      {user2.username ?? '???'}
+                                      <span
+                                        className={'text-3xl text-yellow-500'}
+                                      >
+                                        {winner?.address?.toLowerCase() ===
+                                        game?.address2?.toLowerCase()! ? (
+                                          <>👑</>
+                                        ) : (
+                                          ''
+                                        )}
+                                      </span>{' '}
+                                      {user2?.username ?? '???'}
                                     </span>
                                     <span className={'text-xs italic'}>
                                       {game.address2
@@ -252,27 +252,59 @@ const Home: FC = () => {
                                 </div>
                               </span>
                               <div className={'grow'} />
-                              <div className={'flex flex-row gap-2 self-start'}>
-                                <button
-                                  onClick={() =>
-                                    joinGame(game.gameId, game.address1!)
-                                  }
-                                  className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
-                                  disabled={
-                                    game.address1 === address || !!game.address2
+                              {!winner ? (
+                                <div
+                                  className={'flex flex-row gap-2 self-start'}
+                                >
+                                  <button
+                                    onClick={() =>
+                                      joinGame(
+                                        game.gameId,
+                                        game.address1!,
+                                        game.wager!
+                                      )
+                                    }
+                                    className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
+                                    disabled={
+                                      game.address1 === address ||
+                                      !!game.address2
+                                    }
+                                  >
+                                    Join Game
+                                  </button>
+                                  <Link href={`/${game.gameId}`}>
+                                    <button
+                                      onClick={() => viewGame(game.gameId)}
+                                      className="bg-gray-500 text-white p-2 rounded"
+                                    >
+                                      View Game
+                                    </button>
+                                  </Link>
+                                </div>
+                              ) : (
+                                <div
+                                  className={
+                                    ' flex flex-col items-center justify-center'
                                   }
                                 >
-                                  Join Game
-                                </button>
-                                <Link href={`/${game.gameId}`}>
-                                  <button
-                                    onClick={() => viewGame(game.gameId)}
-                                    className="bg-gray-500 text-white p-2 rounded"
+                                  <div
+                                    className={
+                                      'flex flex-row gap-2 self-center'
+                                    }
                                   >
-                                    View Game
-                                  </button>
-                                </Link>
-                              </div>
+                                    <span className={'font-black'}>
+                                      GAME OVER
+                                    </span>{' '}
+                                    <span className={'italic'}>
+                                      {moves} Moves
+                                    </span>
+                                  </div>
+                                  <div className={'italic text-xs'}>
+                                    {winner?.username} won{' '}
+                                    {parseFloat(game.wager!) * 2} ETH
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )
                         })}
@@ -289,6 +321,16 @@ const Home: FC = () => {
       </Layout>
     </>
   )
+}
+
+function getFullmoveNumberFromFEN(fen: string): number {
+  const parts = fen.split(' ')
+  if (parts.length !== 6) {
+    throw new Error('Invalid FEN string')
+  }
+
+  // Fullmove number is the 6th part of the FEN string
+  return parseInt(parts[5], 10)
 }
 
 export default Home

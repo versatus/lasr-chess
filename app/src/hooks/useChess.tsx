@@ -24,7 +24,6 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<any | undefined>()
   const [isLoadingGames, setIsLoadingGames] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
-
   const [games, setGames] = useState<IGame[] | undefined>()
 
   useEffect(() => {
@@ -69,7 +68,7 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
 
   const getUser = (address: string) => {
     return users?.find(
-      (user) => user.address.toLowerCase() === address.toLowerCase()
+      (user) => user?.address?.toLowerCase() === address?.toLowerCase()
     )
   }
 

@@ -15,7 +15,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@versatus/versatus-javascript": "^0.1.163",
+    "@versatus/versatus-javascript": "^0.1.164",
     "chess.js": "^1.0.0-beta.8",
     "prettier": "^3.2.5"
   }

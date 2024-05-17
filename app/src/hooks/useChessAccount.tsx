@@ -74,7 +74,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
         value: ZERO_VALUE,
       }
       await call(payload)
-      await delay(1500)
+      await delay(2500)
       await refetchAccount()
       toast.success('Transaction sent successfully')
     } catch (e) {
@@ -86,38 +86,42 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [address, accountInfo, call, refetchAccount])
 
-  const createNewGame = useCallback(async () => {
-    try {
-      setIsCreatingGame(true)
-      const nonce = getNewNonceForAccount(accountInfo)
-      const payload = {
-        from: address.toLowerCase(),
-        op: 'newGame',
-        programId: CHESS_PROGRAM_ADDRESS,
-        to: CHESS_PROGRAM_ADDRESS,
-        transactionInputs: JSON.stringify({
-          address1: address,
-        }),
-        transactionType: {
-          call: nonce,
-        },
-        value: ZERO_VALUE,
+  const createNewGame = useCallback(
+    async (wager: string) => {
+      try {
+        setIsCreatingGame(true)
+        const nonce = getNewNonceForAccount(accountInfo)
+        const payload = {
+          from: address.toLowerCase(),
+          op: 'newGame',
+          programId: CHESS_PROGRAM_ADDRESS,
+          to: CHESS_PROGRAM_ADDRESS,
+          transactionInputs: JSON.stringify({
+            address1: address,
+            wager,
+          }),
+          transactionType: {
+            call: nonce,
+          },
+          value: ZERO_VALUE,
+        }
+        await call(payload)
+        await delay(1500)
+        await refetchAccount()
+        toast.success('Transaction sent successfully')
+      } catch (e) {
+        if (e instanceof Error) {
+          toast.error(e.message.replace('Custom error:', ''))
+        }
+      } finally {
+        setIsCreatingGame(false)
       }
-      await call(payload)
-      await delay(1500)
-      await refetchAccount()
-      toast.success('Transaction sent successfully')
-    } catch (e) {
-      if (e instanceof Error) {
-        toast.error(e.message.replace('Custom error:', ''))
-      }
-    } finally {
-      setIsCreatingGame(false)
-    }
-  }, [address, accountInfo, call, refetchAccount])
+    },
+    [address, accountInfo, call, refetchAccount]
+  )
 
   const acceptGame = useCallback(
-    async (gameId: string, address1: string) => {
+    async (gameId: string, address1: string, wager: string) => {
       try {
         setIsAcceptingGame(true)
         const nonce = getNewNonceForAccount(accountInfo)
@@ -129,6 +133,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           transactionInputs: JSON.stringify({
             gameId,
             address1,
+            wager,
           }),
           transactionType: {
             call: nonce,
@@ -151,7 +156,13 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
   )
 
   const submitMove = useCallback(
-    async (gameId: string, move: Move, fen: string, address1: string) => {
+    async (
+      gameId: string,
+      move: Move,
+      fen: string,
+      address1: string,
+      wager: string
+    ) => {
       try {
         setIsMakingMove(true)
         const nonce = getNewNonceForAccount(accountInfo)
@@ -165,6 +176,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
             move,
             fen,
             address1,
+            wager,
           }),
           transactionType: {
             call: nonce,

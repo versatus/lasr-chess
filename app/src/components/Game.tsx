@@ -57,6 +57,35 @@ const Game = ({ gameId }: { gameId: string }) => {
   }, [])
 
   useEffect(() => {
+    if (socket.connected) {
+      console.log('on connect')
+      onConnect()
+    }
+
+    function onConnect() {
+      setIsConnected(true)
+      setTransport(socket.io.engine.transport.name)
+
+      socket.io.engine.on('upgrade', (transport) => {
+        setTransport(transport.name)
+      })
+    }
+
+    function onDisconnect() {
+      setIsConnected(false)
+      setTransport('N/A')
+    }
+
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
+
+    return () => {
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
+    }
+  }, [])
+
+  useEffect(() => {
     if (address && foundGame) {
       if (
         foundGame?.address1?.toLowerCase() === address.toLowerCase() ||
@@ -92,7 +121,7 @@ const Game = ({ gameId }: { gameId: string }) => {
   }, [game])
 
   useEffect(() => {
-    if (address && foundGame) {
+    if (address && foundGame && socket) {
       socket.emit('joinGame', gameId, foundGame.address1, address)
 
       socket.on('updateFen', (fen: string) => {
@@ -112,7 +141,7 @@ const Game = ({ gameId }: { gameId: string }) => {
         socket.disconnect()
       }
     }
-  }, [address, foundGame, gameId, foundGame?.address1])
+  }, [address, foundGame, gameId, foundGame?.address1, socket])
 
   const makeMove = async (move: Move) => {
     try {
@@ -122,8 +151,13 @@ const Game = ({ gameId }: { gameId: string }) => {
       gameCopy.move(move)
       setIsCurrentTurn(false)
       setGame(gameCopy)
-      // console.log(gameId, move, gameCopy.fen(), foundGame?.address1)
-      await submitMove(gameId, move, oldGame.fen(), foundGame?.address1)
+      await submitMove(
+        gameId,
+        move,
+        oldGame.fen(),
+        foundGame?.address1,
+        foundGame?.wager
+      )
       if (socket) {
         socket.emit('refreshGameState', gameId, foundGame?.address1)
       }
@@ -192,7 +226,7 @@ const WaitingForOpponent = () => {
     <>
       <div
         className={
-          'absolute w-full h-full flex gap-6 flex-col items-center justify-center bg-black bg-opacity-80'
+          'absolute w-full h-full flex gap-6 top-0 flex-col items-center justify-center bg-black bg-opacity-80'
         }
       >
         <div className={'text-6xl font-black'}>WAITING FOR OPPONENT</div>

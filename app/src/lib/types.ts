@@ -4,6 +4,7 @@ export interface IGame {
   address2?: string
   fen?: string
   gameState?: string
+  wager?: string
   winnerAddress?: string
 }
 
