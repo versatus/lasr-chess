@@ -15,6 +15,7 @@ import {
   formatVerse,
 } from '@versatus/versatus-javascript'
 import { VERSE_PROGRAM_ADDRESS } from '@/consts/public'
+import { toast } from 'react-hot-toast'
 
 interface LasrWalletContextType {
   address: string
@@ -25,6 +26,7 @@ interface LasrWalletContextType {
   isCalling: boolean
   isDecrypting: boolean
   isEncrypting: boolean
+  hasWallet: boolean
   accountInfo: any
   programs: any
   verseBalance: string
@@ -49,6 +51,7 @@ const LasrWalletContext = createContext<LasrWalletContextType | undefined>({
   isCalling: false,
   isDecrypting: false,
   isEncrypting: false,
+  hasWallet: false,
   accountInfo: undefined,
   programs: [],
   verseBalance: '',
@@ -76,7 +79,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
   const [provider, setProvider] = useState<any>(null)
   const [address, setAddress] = useState<string>('')
   const [hasConnected, setHasConnected] = useLocalStorage('hasConnected', false)
-  const [isConnecting, setIsConnecting] = useState<boolean>(false)
+  const [isConnecting, setIsConnecting] = useState<boolean>(true)
   const [isRequestingAccount, setIsRequestingAccount] = useState(false)
   const [isSigning, setIsSigning] = useState<boolean>(false)
   const [isSending, setIsSending] = useState<boolean>(false)
@@ -87,10 +90,13 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
   const [programs, setPrograms] = useState<Program[]>([])
   const [verseBalance, setVerseBalance] = useState('')
   const [ethBalance, setEthBalance] = useState('')
+  const [hasWallet, setHasWallet] = useState(true)
 
   const requestAccount = useCallback(async () => {
     setIsRequestingAccount(true)
-    if (!provider) console.error('Provider not available')
+    if (!provider) {
+      toast.error('Please install LASR Chrome Extension')
+    }
     try {
       const accountResponse = await provider?.requestAccount()
       setAccountInfo(accountResponse)
@@ -146,6 +152,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
         setProvider(window?.lasr)
       }, 500)
     } else {
+      setHasWallet(false)
       setIsConnecting(false)
     }
   }, [])
@@ -278,6 +285,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
         accountInfo,
         programs,
         verseBalance,
+        hasWallet,
         ethBalance,
         provider,
         requestAccount,

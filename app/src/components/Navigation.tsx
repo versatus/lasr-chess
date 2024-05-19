@@ -1,9 +1,10 @@
 import { useLasrWallet } from '@/providers/LasrWalletProvider'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { AnimatedCounter } from 'react-animated-counter'
 import { truncateString } from '@/utils'
 import Link from 'next/link'
+import { DownloadLasrWallet } from '@/components/DownloadLasrWallet'
 
 const Navigation = () => {
   const {
@@ -12,6 +13,7 @@ const Navigation = () => {
     disconnect,
     isConnecting,
     verseBalance,
+    hasWallet,
     ethBalance,
   } = useLasrWallet()
 
@@ -88,7 +90,7 @@ const Navigation = () => {
             {truncateString(address, 16)}
           </button>
         </div>
-      ) : address ? (
+      ) : !isConnecting && !address && hasWallet ? (
         <button
           onClick={connect}
           className="absolute hover:bg-pink-900 top-4 right-4 border border-pink-600 rounded-full p-4 gap-4 height-[69px] flex flex-row justify-center items-center text-pink-600 disabled:opacity-50 "
@@ -99,6 +101,8 @@ const Navigation = () => {
         <button className="absolute top-4 right-4 border border-pink-600 rounded-full p-4 gap-4 height-[69px] flex flex-row justify-center items-center text-pink-600 disabled:opacity-50 ">
           Connecting...
         </button>
+      ) : !hasWallet ? (
+        <DownloadLasrWallet className={'absolute top-4 right-4'} />
       ) : null}
     </>
   )

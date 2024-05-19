@@ -17,10 +17,11 @@ import { io } from 'socket.io-client'
 import LoadingSpinner from '@/components/LoadingSpinner'
 import { useChess } from '@/hooks/useChess'
 import { Socket } from 'socket.io'
+import { DownloadLasrWallet } from '@/components/DownloadLasrWallet'
 
 const Game = ({ gameId }: { gameId: string }) => {
   const { getUser } = useChess()
-  const { address, isConnecting } = useLasrWallet()
+  const { address, isConnecting, hasWallet } = useLasrWallet()
   const { submitMove } = useChessAccount()
   const { game: foundGame, isLoadingGame } = useChessGame(gameId)
   const [game, setGame] = useState(new Chess())
@@ -127,7 +128,7 @@ const Game = ({ gameId }: { gameId: string }) => {
     if ((foundGame && game.isGameOver()) || foundGame?.winnerAddress) {
       setGameOver(true)
     }
-  }, [game, foundGame, foundGame?.fen])
+  }, [game, foundGame, foundGame?.fen, isCurrentTurn, isInGame])
 
   useEffect(() => {
     if (address && foundGame && socket) {
@@ -153,7 +154,7 @@ const Game = ({ gameId }: { gameId: string }) => {
         socket.disconnect()
       }
     }
-  }, [address, foundGame, gameId, foundGame?.address1])
+  }, [address, foundGame, gameId, foundGame?.address1, socket])
 
   const makeMove = async (move: Move) => {
     try {
@@ -207,6 +208,17 @@ const Game = ({ gameId }: { gameId: string }) => {
             <div className={'w-full flex flex-col items-center justify-center'}>
               <LoadingSpinner />
             </div>
+          ) : !hasWallet ? (
+            <div
+              className={
+                'flex flex-col items-center justify-center italic gap-4'
+              }
+            >
+              <div>
+                You must have the LASR Wallet installed to view the game
+              </div>
+              <DownloadLasrWallet />
+            </div>
           ) : (
             <div
               className={clsx(
@@ -221,14 +233,13 @@ const Game = ({ gameId }: { gameId: string }) => {
                     game.turn() === 'w' ? 'text-pink-600 animate-pulse' : ''
                   )}
                 >
-                  {user1?.username ?? '--'}{' '}
-                  <span className={'text-sm italic font-thin'}>
+                  <span className={'text-md italic font-thin'}>
                     {foundGame?.address1?.toLowerCase() ===
                     address.toLowerCase()
                       ? '(you)'
                       : ''}{' '}
-                  </span>
-                  (W)
+                  </span>{' '}
+                  {user1?.username ?? '--'} (W)
                 </span>{' '}
                 vs{' '}
                 <span
@@ -238,7 +249,7 @@ const Game = ({ gameId }: { gameId: string }) => {
                   )}
                 >
                   (B) {user2?.username ?? '--'}{' '}
-                  <span className={'text-sm italic font-thin'}>
+                  <span className={'text-md italic font-thin'}>
                     {foundGame?.address2?.toLowerCase() ===
                     address.toLowerCase()
                       ? '(you)'
@@ -264,7 +275,7 @@ const Game = ({ gameId }: { gameId: string }) => {
           )}
         </div>
       </Layout>
-      {!foundGame?.address2 && !isConnecting && address && (
+      {foundGame && !foundGame?.address2 && !isConnecting && address && (
         <WaitingForOpponent />
       )}
       {foundGame?.winnerAddress && <GameOverScreen foundGame={foundGame!} />}
@@ -289,6 +300,24 @@ const WaitingForOpponent = () => {
 }
 
 const GameOverScreen = ({ foundGame }: { foundGame: IGame }) => {
+  const { getUser } = useChess()
+  const [winner, setWinner] = useState<
+    { address: string; username: string } | undefined
+  >()
+  const [loser, setLoser] = useState<
+    { address: string; username: string } | undefined
+  >()
+  useEffect(() => {
+    if (foundGame) {
+      if (foundGame.winnerAddress === foundGame.address1) {
+        setWinner(getUser(foundGame.address1))
+        setLoser(getUser(foundGame.address2))
+      } else {
+        setWinner(getUser(foundGame.address2))
+        setLoser(getUser(foundGame.address1))
+      }
+    }
+  }, [foundGame, getUser])
   return (
     <>
       <div
@@ -297,8 +326,11 @@ const GameOverScreen = ({ foundGame }: { foundGame: IGame }) => {
         }
       >
         <div className={'text-6xl font-black'}>GAME OVER</div>
-        <div>
-          <span>WINNER:</span> <span>{foundGame.winnerAddress}</span>
+        <div className={'flex flex-row gap-2 text-3xl font-black'}>
+          <div className={'flex flex-col gap-3 items-center'}>
+            <span>WINNER</span>
+            <span className={'text-yellow-500'}>{winner?.username}</span>
+          </div>
         </div>
         <Link href={'/'}>
           <button
