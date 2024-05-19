@@ -188,7 +188,6 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
         }
         console.log(payload)
         await call(payload)
-        await delay(1500)
         toast.success('Transaction sent successfully')
       } catch (e) {
         if (e instanceof Error) {

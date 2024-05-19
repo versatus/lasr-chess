@@ -15,13 +15,14 @@ import {
   updateTokenData,
   parseAvailableTokenIds,
   buildTransferInstruction,
-  ETH_PROGRAM_ADDRESS,
   parseAmountToBigInt,
 } from "@versatus/versatus-javascript";
 
 import { Chess } from "chess.js";
 
 const NEW_GAME_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
+const VERSE_PROGRAM_ADDRESS = "0x9f85fb953179fb2418faf4e5560c1ac3717e8c0f";
 
 class LasrChess extends Program {
   constructor() {
@@ -49,7 +50,7 @@ class LasrChess extends Program {
       const transferToProgram = buildTransferInstruction({
         from: from,
         to: "this", // Represents the program's address.
-        tokenAddress: ETH_PROGRAM_ADDRESS,
+        tokenAddress: VERSE_PROGRAM_ADDRESS,
         amount: amountNeededForWager,
       });
       return new Outputs(computeInputs, [
@@ -129,7 +130,7 @@ class LasrChess extends Program {
         const transferPayoutToWinner = buildTransferInstruction({
           from: THIS,
           to: from,
-          tokenAddress: ETH_PROGRAM_ADDRESS,
+          tokenAddress: VERSE_PROGRAM_ADDRESS,
           amount: payoutAmount,
         });
         instructions.push(
@@ -182,7 +183,7 @@ class LasrChess extends Program {
       const transferToProgram = buildTransferInstruction({
         from: from,
         to: THIS,
-        tokenAddress: ETH_PROGRAM_ADDRESS,
+        tokenAddress: VERSE_PROGRAM_ADDRESS,
         amount: amountNeededForWager,
       });
       return new Outputs(computeInputs, [

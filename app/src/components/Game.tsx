@@ -189,6 +189,12 @@ const Game = ({ gameId }: { gameId: string }) => {
     return true
   }
 
+  const odds = calculateChessOdds(game.fen())
+
+  console.log(odds)
+
+  const blackOdds = 100 - odds.whiteOdds
+
   return (
     <>
       <Layout>
@@ -271,6 +277,16 @@ const Game = ({ gameId }: { gameId: string }) => {
                 position={game.fen()}
                 onPieceDrop={onDrop}
               />
+              <div className={`relative border flex flex-row p-1 w-full`}>
+                <div
+                  className={clsx(`bg-white p-4 h-full`)}
+                  style={{ width: `${odds.whiteOdds}%` }}
+                />
+                <div
+                  className={clsx(`bg-black p-4 h-full`)}
+                  style={{ width: `${odds.blackOdds}%` }}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -344,4 +360,58 @@ const GameOverScreen = ({ foundGame }: { foundGame: IGame }) => {
       </div>
     </>
   )
+}
+
+interface ChessOdds {
+  whiteOdds: number
+  blackOdds: number
+}
+
+const pieceValues: Record<string, number> = {
+  p: 1,
+  n: 3,
+  b: 3,
+  r: 5,
+  q: 9,
+  k: 0,
+  P: 1,
+  N: 3,
+  B: 3,
+  R: 5,
+  Q: 9,
+  K: 0,
+}
+
+const calculateMaterialValue = (
+  fen: string
+): { white: number; black: number } => {
+  const pieces = fen.split(' ')[0] // Get the pieces part of the FEN
+  let whiteValue = 0
+  let blackValue = 0
+
+  for (const char of pieces) {
+    if (char in pieceValues) {
+      if (char === char.toUpperCase()) {
+        whiteValue += pieceValues[char]
+      } else {
+        blackValue += pieceValues[char]
+      }
+    }
+  }
+
+  return { white: whiteValue, black: blackValue }
+}
+
+const calculateChessOdds = (fen: string): ChessOdds => {
+  const { white, black } = calculateMaterialValue(fen)
+
+  // Simplistic approach: odds based on material balance
+  const totalMaterial = white + black
+  const whiteOdds = (white / totalMaterial) * 100
+  const blackOdds = (black / totalMaterial) * 100
+
+  return {
+    whiteOdds: parseInt(whiteOdds.toFixed(2)),
+    blackOdds: parseInt(blackOdds.toFixed(2)),
+  }
 }

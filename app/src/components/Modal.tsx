@@ -36,7 +36,7 @@ export default function Modal({
                   </button>
                 </div>
                 <div className="relative p-6 flex-auto flex flex-col gap-2 min-w-[400px]">
-                  <p>Select the wager amount (ETH)</p>
+                  <p>Select the wager amount (VERSE)</p>
                   <input
                     value={wager}
                     onChange={(e) => setWager(e.target.value)}

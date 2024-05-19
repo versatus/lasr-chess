@@ -22,7 +22,7 @@ import { DownloadLasrWallet } from '@/components/DownloadLasrWallet'
 
 const Home: FC = () => {
   const { isConnecting, address, hasWallet } = useLasrWallet()
-  const { users, games, isLoadingGames, getUser } = useChess()
+  const { games, isLoadingGames, getUser, leaderBoard } = useChess()
   const {
     isLoading,
     chessAccount,
@@ -186,8 +186,45 @@ const Home: FC = () => {
                   'w-full border border-gray-500 rounded-md p-6 grow flex flex-col'
                 }
               >
+                <div className={'flex items-start flex-col'}>
+                  <div className={'font-black text-xl'}>Leaderboard</div>
+                  {leaderBoard?.map(
+                    (user: {
+                      address: string
+                      username: string
+                      wins: string
+                      losses: string
+                      games: string
+                      amountWon: string
+                      amountLost: string
+                    }) => {
+                      return (
+                        <div key={user.address}>
+                          {user.username}{' '}
+                          <span className={'text-xs text-gray-400 italic'}>
+                            ({truncateString(user.address, 8)})
+                          </span>{' '}
+                          - {user.wins} wins{' '}
+                          <span className={'text-xs text-green-600'}>
+                            (+{user.amountWon} VERSE)
+                          </span>
+                          , {user.losses} losses{' '}
+                          <span className={'text-xs text-red-600'}>
+                            (-{user.amountLost} VERSE)
+                          </span>
+                        </div>
+                      )
+                    }
+                  )}
+                </div>
+              </div>
+              <div
+                className={
+                  'w-full border border-gray-500 rounded-md p-6 grow flex flex-col'
+                }
+              >
                 <div className={'flex flex-row items-center justify-center'}>
-                  <div className={'font-black'}>GAME CENTER</div>
+                  <div className={'font-black'}>GAMES</div>
                   <div className={'grow'} />
                   <button
                     onClick={() => setShowCreateModal(true)}
@@ -197,23 +234,14 @@ const Home: FC = () => {
                   </button>
                 </div>
                 <div className="mt-4 flex flex-col gap-8">
-                  <div className={'flex items-start flex-col'}>
-                    <div className={'font-black text-xl'}>Users</div>
-                    {users.map(
-                      (user: { address: string; username: string }) => {
-                        return (
-                          <div key={user.address}>
-                            {user.username} - {truncateString(user.address, 16)}
-                          </div>
-                        )
-                      }
-                    )}
-                  </div>
                   {isLoadingGames ? (
                     <LoadingSpinner />
-                  ) : games?.length > 0 ? (
+                  ) : games?.filter(
+                      (a: IGame) =>
+                        a.gameState === 'initialized' ||
+                        a.gameState === 'inProgress'
+                    )?.length > 0 ? (
                     <div className={'items-start flex flex-col'}>
-                      <div className={'font-black text-xl'}>Games</div>
                       <div className={'flex flex-col w-full items-start gap-6'}>
                         {games
                           ?.filter(
@@ -240,7 +268,7 @@ const Home: FC = () => {
                                     <span className={'text-pink-600'}>
                                       {game.gameId}
                                     </span>{' '}
-                                    - <span>{game.wager} ETH</span>
+                                    - <span>{game.wager} VERSE</span>
                                   </span>
                                   <div
                                     className={
@@ -351,7 +379,7 @@ const Home: FC = () => {
                                     </div>
                                     <div className={'italic text-xs'}>
                                       {winner?.username} won{' '}
-                                      {parseFloat(game.wager!) * 2} ETH
+                                      {parseFloat(game.wager!) * 2} VERSE
                                     </div>
                                   </div>
                                 )}
@@ -361,7 +389,9 @@ const Home: FC = () => {
                       </div>
                     </div>
                   ) : (
-                    <div>No games available</div>
+                    <div className={'text-gray-500 italic'}>
+                      No active games...
+                    </div>
                   )}
                 </div>
               </div>

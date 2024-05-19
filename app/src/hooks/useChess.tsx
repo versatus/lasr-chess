@@ -25,6 +25,20 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
   const [isLoadingGames, setIsLoadingGames] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [games, setGames] = useState<IGame[] | undefined>()
+  const [isLoadingLeaderBoard, setIsLoadingLeaderBoard] =
+    useState<boolean>(true)
+  const [leaderBoard, setLeaderBoard] = useState<
+    | {
+        address: string
+        username: string
+        wins: number
+        losses: number
+        games: number
+        amountWon: number
+        amountLost: number
+      }[]
+    | undefined
+  >()
 
   useEffect(() => {
     const fetchGames = async () => {
@@ -43,31 +57,46 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   useEffect(() => {
-    if (programAccountData && programAccountData?.users) {
-      setUsers(
-        Object.entries(JSON.parse(programAccountData?.users)).map(
-          ([key, value]) => {
-            return { address: key, username: value }
-          }
-        )
-      )
-    }
-  }, [programAccountData])
-
-  useEffect(() => {
-    if (data && address) {
-      // requestAccount()
-      const foundUser = Object.entries(data).find(
-        ([userAddress]) => address.toLowerCase() === userAddress.toLowerCase()
-      )?.[1]
-      if (foundUser) {
-        setProfile(JSON.parse(foundUser))
+    const fetchUsers = async () => {
+      try {
+        setIsLoadingLeaderBoard(true)
+        const response = await axios.get<
+          {
+            address: string
+            username: string
+            wins: number
+            losses: number
+            games: number
+            amountWon: number
+            amountLost: number
+          }[]
+        >('/api/users')
+        // @ts-ignore
+        setLeaderBoard(response.data)
+      } catch (error) {
+        setError(error instanceof Error ? error.message : 'An error occurred')
+      } finally {
+        setIsLoadingLeaderBoard(false)
       }
     }
-  }, [address, data])
+
+    fetchUsers()
+  }, [])
+
+  // useEffect(() => {
+  //   if (programAccountData && programAccountData?.users) {
+  //     setUsers(
+  //       Object.entries(JSON.parse(programAccountData?.users)).map(
+  //         ([key, value]) => {
+  //           return { address: key, username: value }
+  //         }
+  //       )
+  //     )
+  //   }
+  // }, [programAccountData])
 
   const getUser = (address: string) => {
-    return users?.find(
+    return leaderBoard?.find(
       (user) => user?.address?.toLowerCase() === address?.toLowerCase()
     )
   }
@@ -80,6 +109,8 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
         fetch: getProgram,
         games,
         isLoadingGames,
+        leaderBoard,
+        isLoadingLeaderBoard,
         getUser,
       }}
     >
