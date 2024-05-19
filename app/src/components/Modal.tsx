@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useChessAccount } from '@/hooks/useChessAccount'
 
 export default function Modal({
   title,
@@ -15,6 +16,7 @@ export default function Modal({
   setShowModal: (showModal: boolean) => void
   startNewGame: () => void
 }) {
+  const { isCreatingGame } = useChessAccount()
   return (
     <>
       {showModal ? (
@@ -52,11 +54,12 @@ export default function Modal({
                     Cancel
                   </button>
                   <button
-                    className="bg-emerald-500 text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                    className="bg-emerald-500 disabled:animate-pulse text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
                     type="button"
+                    disabled={isCreatingGame}
                     onClick={startNewGame}
                   >
-                    Create Game
+                    {isCreatingGame ? 'Creating Game...' : 'Create Game'}
                   </button>
                 </div>
               </div>

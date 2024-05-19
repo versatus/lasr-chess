@@ -1,40 +1,18 @@
-import { useEffect, useState } from 'react'
-import { socket } from '@/socket'
+import { useEffect } from 'react'
+import io from 'socket.io-client'
 
-export default function useSocket() {
-  const [isConnected, setIsConnected] = useState(socket.connected)
-  const [transport, setTransport] = useState(
-    socket.io.engine.transport.name || 'N/A'
-  )
+const socket = io()
 
+export default function useSocket(eventName: unknown, cb: unknown) {
   useEffect(() => {
-    function onConnect() {
-      setIsConnected(true)
-      setTransport(socket.io.engine.transport.name)
+    // @ts-ignore
+    socket.on(eventName, cb)
 
-      socket.io.engine.on('upgrade', (transport) => {
-        setTransport(transport.name)
-      })
+    return function socketCleanup() {
+      // @ts-ignore
+      socket.off(eventName, cb)
     }
+  }, [eventName, cb])
 
-    function onDisconnect() {
-      setIsConnected(false)
-      setTransport('N/A')
-    }
-
-    socket.on('connect', onConnect)
-    socket.on('disconnect', onDisconnect)
-
-    // Check the initial connection status
-    if (socket.connected) {
-      onConnect()
-    }
-
-    return () => {
-      socket.off('connect', onConnect)
-      socket.off('disconnect', onDisconnect)
-    }
-  }, []) // Empty dependency array to run the effect only once
-
-  return { isConnected, socket }
+  return socket
 }

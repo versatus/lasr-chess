@@ -16,9 +16,11 @@ import { Move } from 'chess.js'
 import axios from 'axios'
 import { useChess } from '@/hooks/useChess'
 import { IProgram, ZERO_VALUE } from '@versatus/versatus-javascript'
+import { useRouter } from 'next/navigation'
 
 const ChessAccountContext = createContext<any>(undefined)
 export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
+  const router = useRouter()
   const { address, accountInfo, call, requestAccount } = useLasrWallet()
   const { profile } = useChess()
   const { refetchAccount, isFetching: isFetchingAccount } =
@@ -106,8 +108,8 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           value: ZERO_VALUE,
         }
         await call(payload)
-        await delay(1500)
-        await refetchAccount()
+        // await delay(1500)
+        // await refetchAccount()
         toast.success('Transaction sent successfully')
       } catch (e) {
         if (e instanceof Error) {
@@ -149,10 +151,11 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           toast.error(e.message.replace('Custom error:', ''))
         }
       } finally {
-        setIsAcceptingGame(false)
+        // setIsAcceptingGame(false)
+        await router.push(`/${gameId}`)
       }
     },
-    [address, accountInfo, call, refetchAccount]
+    [accountInfo, address, call, refetchAccount, router]
   )
 
   const submitMove = useCallback(

@@ -14,8 +14,13 @@ import { useChess } from '@/hooks/useChess'
 import Link from 'next/link'
 import { IGame } from '@/lib/types'
 import { truncateString } from '@/utils'
-import { socket } from '@/socket'
 import Modal from '@/components/Modal'
+import { io } from 'socket.io-client'
+
+const socket = io({
+  reconnection: true,
+  autoConnect: true,
+})
 
 const Home: FC = () => {
   const { isConnecting, address } = useLasrWallet()
@@ -24,6 +29,7 @@ const Home: FC = () => {
     isLoading,
     chessAccount,
     createNewGame,
+    isAcceptingGame,
     acceptGame,
     isApproved,
     isApproving,
@@ -173,7 +179,11 @@ const Home: FC = () => {
                     <div className={'font-black text-xl'}>Users</div>
                     {users.map(
                       (user: { address: string; username: string }) => {
-                        return <div key={user.address}>{user.username}</div>
+                        return (
+                          <div key={user.address}>
+                            {user.username} - {truncateString(user.address, 16)}
+                          </div>
+                        )
                       }
                     )}
                   </div>
@@ -235,7 +245,8 @@ const Home: FC = () => {
                                         className={'text-3xl text-yellow-500'}
                                       >
                                         {winner?.address?.toLowerCase() ===
-                                        game?.address2?.toLowerCase()! ? (
+                                          game?.address2?.toLowerCase()! &&
+                                        user2?.username ? (
                                           <>👑</>
                                         ) : (
                                           ''
@@ -256,22 +267,28 @@ const Home: FC = () => {
                                 <div
                                   className={'flex flex-row gap-2 self-start'}
                                 >
-                                  <button
-                                    onClick={() =>
-                                      joinGame(
-                                        game.gameId,
-                                        game.address1!,
-                                        game.wager!
-                                      )
-                                    }
-                                    className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
-                                    disabled={
-                                      game.address1 === address ||
-                                      !!game.address2
-                                    }
-                                  >
-                                    Join Game
-                                  </button>
+                                  {!game.address2 && (
+                                    <button
+                                      onClick={() =>
+                                        joinGame(
+                                          game.gameId,
+                                          game.address1!,
+                                          game.wager!
+                                        )
+                                      }
+                                      className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
+                                      disabled={
+                                        game.address1?.toLowerCase() ===
+                                          address.toLowerCase() ||
+                                        !!game.address2 ||
+                                        isAcceptingGame
+                                      }
+                                    >
+                                      {isAcceptingGame
+                                        ? 'Joining...'
+                                        : 'Join Game'}
+                                    </button>
+                                  )}
                                   <Link href={`/${game.gameId}`}>
                                     <button
                                       onClick={() => viewGame(game.gameId)}

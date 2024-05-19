@@ -3,7 +3,6 @@ import React, { FC, useEffect, useState } from 'react'
 import Navigation from '@/components/Navigation'
 import { useLasrWallet } from '@/providers/LasrWalletProvider'
 import { Chess, Move, Square } from 'chess.js'
-import { socket } from '@/socket'
 import { toast } from 'react-hot-toast'
 import Layout from '@/components/Layout'
 import ProgramTitle from '@/components/ProgramTitle'
@@ -14,8 +13,14 @@ import clsx from 'clsx'
 import { IGame } from '@/lib/types'
 import Link from 'next/link'
 
+import { io } from 'socket.io-client'
+import LoadingSpinner from '@/components/LoadingSpinner'
+import { useChess } from '@/hooks/useChess'
+import { Socket } from 'socket.io'
+
 const Game = ({ gameId }: { gameId: string }) => {
-  const { address } = useLasrWallet()
+  const { getUser } = useChess()
+  const { address, isConnecting } = useLasrWallet()
   const { submitMove } = useChessAccount()
   const { game: foundGame, isLoadingGame } = useChessGame(gameId)
   const [game, setGame] = useState(new Chess())
@@ -24,66 +29,70 @@ const Game = ({ gameId }: { gameId: string }) => {
   const [isInGame, setIsInGame] = useState(false)
   const [isWhite, setIsWhite] = useState(true)
   const [isCurrentTurn, setIsCurrentTurn] = useState(false)
-  const [isConnected, setIsConnected] = useState(socket.connected)
+
+  const [socket, setSocket] = useState<Socket | undefined>()
+
+  const [user1, setUser1] = useState<
+    { address: string; username: string } | undefined
+  >()
+  const [user2, setUser2] = useState<
+    { address: string; username: string } | undefined
+  >()
+
+  const [isConnected, setIsConnected] = useState(false)
   const [transport, setTransport] = useState('N/A')
 
   useEffect(() => {
-    if (socket.connected) {
-      console.log('on connect')
-      onConnect()
-    }
-
-    function onConnect() {
-      setIsConnected(true)
-      setTransport(socket.io.engine.transport.name)
-
-      socket.io.engine.on('upgrade', (transport) => {
-        setTransport(transport.name)
+    if (address) {
+      const temp = io({
+        reconnection: true,
       })
+      // @ts-ignore
+      setSocket(temp)
     }
-
-    function onDisconnect() {
-      setIsConnected(false)
-      setTransport('N/A')
-    }
-
-    socket.on('connect', onConnect)
-    socket.on('disconnect', onDisconnect)
-
-    return () => {
-      socket.off('connect', onConnect)
-      socket.off('disconnect', onDisconnect)
-    }
-  }, [])
+  }, [address, foundGame])
 
   useEffect(() => {
-    if (socket.connected) {
-      console.log('on connect')
-      onConnect()
+    if (foundGame) {
+      setUser1(getUser(foundGame.address1))
+      if (foundGame.address2) {
+        setUser2(getUser(foundGame.address2))
+      }
     }
+  }, [foundGame, getUser])
 
+  useEffect(() => {
     function onConnect() {
       setIsConnected(true)
-      setTransport(socket.io.engine.transport.name)
-
-      socket.io.engine.on('upgrade', (transport) => {
-        setTransport(transport.name)
-      })
+      if (socket) {
+        // @ts-ignore
+        setTransport(socket?.io.engine.transport.name)
+        // @ts-ignore
+        socket?.io?.engine.on('upgrade', (transport) => {
+          setTransport(transport.name)
+        })
+      }
     }
 
     function onDisconnect() {
       setIsConnected(false)
       setTransport('N/A')
     }
+    if (socket) {
+      if (socket.connected) {
+        console.log('on connect')
+        onConnect()
+      }
 
-    socket.on('connect', onConnect)
-    socket.on('disconnect', onDisconnect)
+      socket.on('connect', onConnect)
+      socket.on('disconnect', onDisconnect)
 
-    return () => {
-      socket.off('connect', onConnect)
-      socket.off('disconnect', onDisconnect)
+      return () => {
+        socket.off('connect', onConnect)
+        socket.off('disconnect', onDisconnect)
+      }
     }
-  }, [])
+  }, [socket])
 
   useEffect(() => {
     if (address && foundGame) {
@@ -115,16 +124,19 @@ const Game = ({ gameId }: { gameId: string }) => {
   }, [game, isWhite])
 
   useEffect(() => {
-    if (game.isGameOver()) {
+    if ((foundGame && game.isGameOver()) || foundGame?.winnerAddress) {
       setGameOver(true)
     }
-  }, [game])
+  }, [game, foundGame, foundGame?.fen])
 
   useEffect(() => {
     if (address && foundGame && socket) {
       socket.emit('joinGame', gameId, foundGame.address1, address)
 
+      console.log({ gameId })
+
       socket.on('updateFen', (fen: string) => {
+        console.log('UPDATE FEN!')
         const gameCopy = new Chess()
         gameCopy.load(fen)
         setGame(gameCopy)
@@ -141,7 +153,7 @@ const Game = ({ gameId }: { gameId: string }) => {
         socket.disconnect()
       }
     }
-  }, [address, foundGame, gameId, foundGame?.address1, socket])
+  }, [address, foundGame, gameId, foundGame?.address1])
 
   const makeMove = async (move: Move) => {
     try {
@@ -159,6 +171,7 @@ const Game = ({ gameId }: { gameId: string }) => {
         foundGame?.wager
       )
       if (socket) {
+        console.log('EMITING REFRESH', gameId)
         socket.emit('refreshGameState', gameId, foundGame?.address1)
       }
     } catch (e) {
@@ -190,30 +203,70 @@ const Game = ({ gameId }: { gameId: string }) => {
           imgUrl={'/cham-chess.webp'}
         />
         <div className={'bg-gray-800 grow h-[650px] w-[650px] flex flex-col '}>
-          <div
-            className={clsx(
-              'flex flex-col gap-2 w-full',
-              isLoadingGame ? 'animate-pulse' : ''
-            )}
-          >
-            <Chessboard
-              boardOrientation={
-                foundGame?.address2?.toLowerCase() === address.toLowerCase()
-                  ? 'black'
-                  : 'white'
-              }
-              arePiecesDraggable={isInGame && !isLoadingGame && isCurrentTurn}
-              customDarkSquareStyle={{
-                backgroundColor: 'rgba(219 39 119 / var(--tw-bg-opacity))',
-              }}
-              customLightSquareStyle={{ backgroundColor: 'white' }}
-              position={game.fen()}
-              onPieceDrop={onDrop}
-            />
-          </div>
+          {isConnecting ? (
+            <div className={'w-full flex flex-col items-center justify-center'}>
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div
+              className={clsx(
+                'flex flex-col gap-2 w-full',
+                isLoadingGame ? 'animate-pulse' : ''
+              )}
+            >
+              <div>
+                <span
+                  className={clsx(
+                    'text-2xl font-black',
+                    game.turn() === 'w' ? 'text-pink-600 animate-pulse' : ''
+                  )}
+                >
+                  {user1?.username ?? '--'}{' '}
+                  <span className={'text-sm italic font-thin'}>
+                    {foundGame?.address1?.toLowerCase() ===
+                    address.toLowerCase()
+                      ? '(you)'
+                      : ''}{' '}
+                  </span>
+                  (W)
+                </span>{' '}
+                vs{' '}
+                <span
+                  className={clsx(
+                    'text-2xl font-black',
+                    game.turn() === 'b' ? 'text-pink-600 animate-pulse' : ''
+                  )}
+                >
+                  (B) {user2?.username ?? '--'}{' '}
+                  <span className={'text-sm italic font-thin'}>
+                    {foundGame?.address2?.toLowerCase() ===
+                    address.toLowerCase()
+                      ? '(you)'
+                      : ''}
+                  </span>
+                </span>
+              </div>
+              <Chessboard
+                boardOrientation={
+                  foundGame?.address2?.toLowerCase() === address.toLowerCase()
+                    ? 'black'
+                    : 'white'
+                }
+                arePiecesDraggable={isInGame && !isLoadingGame && isCurrentTurn}
+                customDarkSquareStyle={{
+                  backgroundColor: 'rgba(219 39 119 / var(--tw-bg-opacity))',
+                }}
+                customLightSquareStyle={{ backgroundColor: 'white' }}
+                position={game.fen()}
+                onPieceDrop={onDrop}
+              />
+            </div>
+          )}
         </div>
       </Layout>
-      {!foundGame?.address2 && <WaitingForOpponent />}
+      {!foundGame?.address2 && !isConnecting && address && (
+        <WaitingForOpponent />
+      )}
       {foundGame?.winnerAddress && <GameOverScreen foundGame={foundGame!} />}
     </>
   )
