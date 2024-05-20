@@ -142,7 +142,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
       setIsConnecting(false)
       alert('Please install LASR Chrome Extension')
     }
-  }, [provider])
+  }, [provider, requestAccount, setHasConnected])
 
   useEffect(() => {
     // @ts-ignore
@@ -161,7 +161,11 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
     //@ts-ignore
     if (provider && hasConnected) {
       setTimeout(async () => {
-        await connect()
+        try {
+          await connect()
+        } catch (e) {
+          toast.error('Connection lost. Please reconnect')
+        }
       }, 1000)
     }
   }, [provider, hasConnected, connect])
