@@ -13,16 +13,25 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useChess } from '@/hooks/useChess'
 import Link from 'next/link'
 import { IGame } from '@/lib/types'
-import { truncateString } from '@/utils'
+import { delay, truncateString } from '@/utils'
 import Modal from '@/components/Modal'
 import { io } from 'socket.io-client'
 import { Socket } from 'socket.io'
-import { FaDownload } from 'react-icons/fa6'
 import { DownloadLasrWallet } from '@/components/DownloadLasrWallet'
+import { AnimatedCounter } from 'react-animated-counter'
+import { FaPlus } from 'react-icons/fa6'
+import { calculateChessOdds } from '@/lib/clientHelpers'
+import clsx from 'clsx'
 
 const Home: FC = () => {
   const { isConnecting, address, hasWallet } = useLasrWallet()
-  const { games, isLoadingGames, getUser, leaderBoard } = useChess()
+  const {
+    games: chessGames,
+    isLoadingGames,
+    getUser,
+    leaderBoard,
+    fetch,
+  } = useChess()
   const {
     isLoading,
     chessAccount,
@@ -30,7 +39,6 @@ const Home: FC = () => {
     isAcceptingGame,
     acceptGame,
     isApproved,
-
     isApproving,
     approve,
   } = useChessAccount()
@@ -40,8 +48,18 @@ const Home: FC = () => {
 
   const [socket, setSocket] = useState<Socket | undefined>()
 
+  const [addressesHere, setAddressesHere] = useState<string[]>([])
+
   const [isConnected, setIsConnected] = useState(false)
   const [transport, setTransport] = useState('N/A')
+
+  const [games, setGames] = useState<IGame[]>([])
+
+  useEffect(() => {
+    if (chessGames) {
+      setGames(chessGames)
+    }
+  }, [chessGames])
 
   useEffect(() => {
     if (address) {
@@ -90,25 +108,39 @@ const Home: FC = () => {
     if (chessAccount && address && socket) {
       socket.emit('joinGameCenter', address)
 
+      socket.on('gameCenterMembers', (members: string[]) => {
+        setAddressesHere(members)
+      })
+
+      socket.on('currentGames', (games: IGame[]) => {
+        console.log('current games', games)
+        setGames(games)
+      })
+
       return () => {
+        socket.off('gameCenterMembers', () => {
+          console.log('unsubscribed')
+        })
         socket.disconnect()
       }
     }
-  }, [chessAccount, address])
+  }, [chessAccount, address, socket])
 
   const startNewGame = async () => {
     await createNewGame(wager)
     setShowCreateModal(false)
-    socket?.emit('createGame', address)
+    await delay(1500)
+    await fetch()
+    // socket?.emit('createGame', '', address)
   }
 
   const joinGame = async (gameId: string, address1: string, wager: string) => {
     await acceptGame(gameId, address1, wager)
-    socket?.emit('joinGame', gameId, address1)
+    // socket?.emit('joinGame', gameId, address1)
   }
 
   const viewGame = (gameId: string) => {
-    socket?.emit('joinGame', gameId, address)
+    // socket?.emit('joinGame', gameId, address)
   }
 
   return (
@@ -228,9 +260,10 @@ const Home: FC = () => {
                   <div className={'grow'} />
                   <button
                     onClick={() => setShowCreateModal(true)}
-                    className="border border-blue-500 hover:bg-blue-500 transition-all text-white p-2 rounded"
+                    className="border flex flex-row gap-2 items-center justify-center border-blue-500 hover:bg-blue-500 transition-all text-white p-2 rounded"
                   >
-                    Start New Game
+                    <FaPlus />
+                    New
                   </button>
                 </div>
                 <div className="mt-4 flex flex-col gap-8">
@@ -254,133 +287,162 @@ const Home: FC = () => {
                             const user2 = getUser(game.address2)
                             const winner = getUser(game.winnerAddress!)
                             const moves = getFullmoveNumberFromFEN(game?.fen!)
+
+                            const odds = calculateChessOdds(game.fen!)
+
                             // @ts-ignore
                             return (
                               <div
                                 key={game.gameId}
-                                className="flex w-full border border-gray-600 p-4 rounded-md items-center justify-center flex-row mt-2"
+                                className={
+                                  'flex flex-col gap-2 w-full border border-gray-600 p-4 rounded-md'
+                                }
                               >
-                                <span
-                                  className={'flex flex-col text-left gap-1'}
-                                >
-                                  <span>
-                                    Game ID:{' '}
-                                    <span className={'text-pink-600'}>
-                                      {game.gameId}
-                                    </span>{' '}
-                                    - <span>{game.wager} VERSE</span>
-                                  </span>
-                                  <div
-                                    className={
-                                      'flex flex-row items-center gap-2'
-                                    }
+                                <div className="flex w-full items-center justify-center flex-row">
+                                  <span
+                                    className={'flex flex-col text-left gap-1'}
                                   >
-                                    <span
-                                      className={
-                                        'text-sm flex items-center flex-col gap-1'
-                                      }
-                                    >
-                                      <span className={'font-black text-lg'}>
-                                        <span className={'text-3xl '}>
-                                          {winner?.address?.toLowerCase() ===
-                                          game?.address1?.toLowerCase()! ? (
-                                            <>👑</>
-                                          ) : (
-                                            ''
-                                          )}
-                                        </span>{' '}
-                                        {user1?.username}
-                                      </span>
-                                      <span className={'text-xs italic'}>
-                                        {truncateString(game.address1!, 10)}
+                                    <span>
+                                      Game ID:{' '}
+                                      <span className={'text-pink-600'}>
+                                        {game.gameId}
+                                      </span>{' '}
+                                      -{' '}
+                                      <span className={'italic text-sm'}>
+                                        {game.wager} VERSE
                                       </span>
                                     </span>
-                                    <span className={'italic'}>vs</span>
-                                    <span
-                                      className={
-                                        'text-sm flex items-center flex-col gap-1'
-                                      }
-                                    >
-                                      <span className={'font-black text-lg'}>
-                                        <span
-                                          className={'text-3xl text-yellow-500'}
-                                        >
-                                          {winner?.address?.toLowerCase() ===
-                                            game?.address2?.toLowerCase()! &&
-                                          user2?.username ? (
-                                            <>👑</>
-                                          ) : (
-                                            ''
-                                          )}
-                                        </span>{' '}
-                                        {user2?.username ?? '???'}
-                                      </span>
-                                      <span className={'text-xs italic'}>
-                                        {game.address2
-                                          ? truncateString(game.address2!, 10)
-                                          : '???'}
-                                      </span>
-                                    </span>
-                                  </div>
-                                </span>
-                                <div className={'grow'} />
-                                {!winner ? (
-                                  <div
-                                    className={'flex flex-row gap-2 self-start'}
-                                  >
-                                    {!game.address2 && (
-                                      <button
-                                        onClick={() =>
-                                          joinGame(
-                                            game.gameId,
-                                            game.address1!,
-                                            game.wager!
-                                          )
-                                        }
-                                        className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
-                                        disabled={
-                                          game.address1?.toLowerCase() ===
-                                            address.toLowerCase() ||
-                                          !!game.address2 ||
-                                          isAcceptingGame
-                                        }
-                                      >
-                                        {isAcceptingGame
-                                          ? 'Joining...'
-                                          : 'Join Game'}
-                                      </button>
-                                    )}
-                                    <Link href={`/${game.gameId}`}>
-                                      <button
-                                        onClick={() => viewGame(game.gameId)}
-                                        className="bg-gray-500 text-white p-2 rounded"
-                                      >
-                                        View Game
-                                      </button>
-                                    </Link>
-                                  </div>
-                                ) : (
-                                  <div
-                                    className={
-                                      ' flex flex-col items-center justify-center'
-                                    }
-                                  >
                                     <div
                                       className={
-                                        'flex flex-row gap-2 self-center'
+                                        'flex flex-row items-center gap-2'
                                       }
                                     >
-                                      <span className={'font-black'}>
-                                        GAME OVER
-                                      </span>{' '}
-                                      <span className={'italic'}>
-                                        {moves} Moves
+                                      <span
+                                        className={
+                                          'text-sm flex items-center flex-col gap-1'
+                                        }
+                                      >
+                                        <span className={'font-black text-lg'}>
+                                          <span className={'text-3xl '}>
+                                            {winner?.address?.toLowerCase() ===
+                                            game?.address1?.toLowerCase()! ? (
+                                              <>👑</>
+                                            ) : (
+                                              ''
+                                            )}
+                                          </span>{' '}
+                                          {user1?.username}
+                                        </span>
+                                        <span className={'text-xs italic'}>
+                                          {truncateString(game.address1!, 10)}
+                                        </span>
+                                      </span>
+                                      <span className={'italic'}>vs</span>
+                                      <span
+                                        className={
+                                          'text-sm flex items-center flex-col gap-1'
+                                        }
+                                      >
+                                        <span className={'font-black text-lg'}>
+                                          <span
+                                            className={
+                                              'text-3xl text-yellow-500'
+                                            }
+                                          >
+                                            {winner?.address?.toLowerCase() ===
+                                              game?.address2?.toLowerCase()! &&
+                                            user2?.username ? (
+                                              <>👑</>
+                                            ) : (
+                                              ''
+                                            )}
+                                          </span>{' '}
+                                          {user2?.username ?? '???'}
+                                        </span>
+                                        <span className={'text-xs italic'}>
+                                          {game.address2
+                                            ? truncateString(game.address2!, 10)
+                                            : '???'}
+                                        </span>
                                       </span>
                                     </div>
-                                    <div className={'italic text-xs'}>
-                                      {winner?.username} won{' '}
-                                      {parseFloat(game.wager!) * 2} VERSE
+                                  </span>
+                                  <div className={'grow'} />
+                                  {!winner ? (
+                                    <div
+                                      className={
+                                        'flex flex-row gap-2 self-start'
+                                      }
+                                    >
+                                      {!game.address2 && (
+                                        <button
+                                          onClick={() =>
+                                            joinGame(
+                                              game.gameId,
+                                              game.address1!,
+                                              game.wager!
+                                            )
+                                          }
+                                          className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
+                                          disabled={
+                                            game.address1?.toLowerCase() ===
+                                              address.toLowerCase() ||
+                                            !!game.address2 ||
+                                            isAcceptingGame
+                                          }
+                                        >
+                                          {isAcceptingGame
+                                            ? 'Joining...'
+                                            : 'Join Game'}
+                                        </button>
+                                      )}
+                                      <Link href={`/${game.gameId}`}>
+                                        <button
+                                          onClick={() => viewGame(game.gameId)}
+                                          className="bg-gray-500 text-white p-2 rounded"
+                                        >
+                                          View Game
+                                        </button>
+                                      </Link>
                                     </div>
+                                  ) : (
+                                    <div
+                                      className={
+                                        ' flex flex-col items-center justify-center'
+                                      }
+                                    >
+                                      <div
+                                        className={
+                                          'flex flex-row gap-2 self-center'
+                                        }
+                                      >
+                                        <span className={'font-black'}>
+                                          GAME OVER
+                                        </span>{' '}
+                                        <span className={'italic'}>
+                                          {moves} Moves
+                                        </span>
+                                      </div>
+                                      <div className={'italic text-xs'}>
+                                        {winner?.username} won{' '}
+                                        {parseFloat(game.wager!) * 2} VERSE
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                                <div className={'grow'} />
+                                {game?.address2 && (
+                                  <div
+                                    className={`relative border flex flex-row p-1 w-full`}
+                                  >
+                                    <div
+                                      className={clsx(`bg-white p-1 h-full`)}
+                                      style={{ width: `${odds.whiteOdds}%` }}
+                                    />
+                                    <div
+                                      className={clsx(`bg-black p-1 h-full`)}
+                                      style={{ width: `${odds.blackOdds}%` }}
+                                    />
                                   </div>
                                 )}
                               </div>
@@ -397,6 +459,27 @@ const Home: FC = () => {
               </div>
             </div>
           )}
+        </div>
+        <div
+          className={
+            'fixed p-3 flex flex-row gap-1 bottom-0 left-0 bg-pink-500'
+          }
+        >
+          {isConnected ? 'Connected' : 'Not Connected'} ({transport}){' '}
+        </div>
+        <div
+          className={
+            'fixed p-3 flex flex-row gap-1 bottom-0 right-0 bg-pink-500'
+          }
+        >
+          <AnimatedCounter
+            value={addressesHere?.length}
+            color="white"
+            decimalPrecision={0}
+            fontSize="16px"
+            includeCommas={true}
+          />
+          here
         </div>
       </Layout>
     </>

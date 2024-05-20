@@ -1,18 +1,55 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import io from 'socket.io-client'
+import { Socket } from 'socket.io'
+import { useLasrWallet } from '@/providers/LasrWalletProvider'
 
-const socket = io()
+export default function useSocket(address: string) {
+  const [socket, setSocket] = useState<Socket | undefined>()
+  const [isConnected, setIsConnected] = useState(false)
+  const [transport, setTransport] = useState('N/A')
 
-export default function useSocket(eventName: unknown, cb: unknown) {
   useEffect(() => {
-    // @ts-ignore
-    socket.on(eventName, cb)
-
-    return function socketCleanup() {
+    if (address) {
+      const temp = io({
+        reconnection: true,
+      })
       // @ts-ignore
-      socket.off(eventName, cb)
+      setSocket(temp)
     }
-  }, [eventName, cb])
+  }, [address])
+
+  useEffect(() => {
+    function onConnect() {
+      setIsConnected(true)
+      if (socket) {
+        // @ts-ignore
+        setTransport(socket?.io.engine.transport.name)
+        // @ts-ignore
+        socket?.io?.engine.on('upgrade', (transport) => {
+          setTransport(transport.name)
+        })
+      }
+    }
+
+    function onDisconnect() {
+      setIsConnected(false)
+      setTransport('N/A')
+    }
+    if (socket) {
+      if (socket.connected) {
+        console.log('on connect')
+        onConnect()
+      }
+
+      socket.on('connect', onConnect)
+      socket.on('disconnect', onDisconnect)
+
+      return () => {
+        socket.off('connect', onConnect)
+        socket.off('disconnect', onDisconnect)
+      }
+    }
+  }, [socket])
 
   return socket
 }

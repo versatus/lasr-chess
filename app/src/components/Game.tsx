@@ -18,6 +18,9 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { useChess } from '@/hooks/useChess'
 import { Socket } from 'socket.io'
 import { DownloadLasrWallet } from '@/components/DownloadLasrWallet'
+import useSocket from '@/hooks/useSocket'
+import { AnimatedCounter } from 'react-animated-counter'
+import { calculateChessOdds } from '@/lib/clientHelpers'
 
 const Game = ({ gameId }: { gameId: string }) => {
   const { getUser } = useChess()
@@ -31,15 +34,15 @@ const Game = ({ gameId }: { gameId: string }) => {
   const [isWhite, setIsWhite] = useState(true)
   const [isCurrentTurn, setIsCurrentTurn] = useState(false)
 
-  const [socket, setSocket] = useState<Socket | undefined>()
-
   const [user1, setUser1] = useState<
     { address: string; username: string } | undefined
   >()
   const [user2, setUser2] = useState<
     { address: string; username: string } | undefined
   >()
+  const [addressesHere, setAddressesHere] = useState<string[]>([])
 
+  const [socket, setSocket] = useState<Socket | undefined>()
   const [isConnected, setIsConnected] = useState(false)
   const [transport, setTransport] = useState('N/A')
 
@@ -52,15 +55,6 @@ const Game = ({ gameId }: { gameId: string }) => {
       setSocket(temp)
     }
   }, [address, foundGame])
-
-  useEffect(() => {
-    if (foundGame) {
-      setUser1(getUser(foundGame.address1))
-      if (foundGame.address2) {
-        setUser2(getUser(foundGame.address2))
-      }
-    }
-  }, [foundGame, getUser])
 
   useEffect(() => {
     function onConnect() {
@@ -107,6 +101,15 @@ const Game = ({ gameId }: { gameId: string }) => {
   }, [address, foundGame])
 
   useEffect(() => {
+    if (foundGame) {
+      setUser1(getUser(foundGame.address1))
+      if (foundGame.address2) {
+        setUser2(getUser(foundGame.address2))
+      }
+    }
+  }, [foundGame, getUser])
+
+  useEffect(() => {
     if (isInGame) {
       if (foundGame?.address2?.toLowerCase() === address.toLowerCase()) {
         setIsWhite(false)
@@ -125,7 +128,7 @@ const Game = ({ gameId }: { gameId: string }) => {
   }, [game, isWhite])
 
   useEffect(() => {
-    if ((foundGame && game.isGameOver()) || foundGame?.winnerAddress) {
+    if (game.isGameOver() || foundGame?.winnerAddress) {
       setGameOver(true)
     }
   }, [game, foundGame, foundGame?.fen, isCurrentTurn, isInGame])
@@ -134,13 +137,17 @@ const Game = ({ gameId }: { gameId: string }) => {
     if (address && foundGame && socket) {
       socket.emit('joinGame', gameId, foundGame.address1, address)
 
-      console.log({ gameId })
-
       socket.on('updateFen', (fen: string) => {
-        console.log('UPDATE FEN!')
         const gameCopy = new Chess()
         gameCopy.load(fen)
         setGame(gameCopy)
+        if (gameCopy.isGameOver()) {
+          setGameOver(true)
+        }
+      })
+
+      socket.on('gameMembers', (members: any[]) => {
+        setAddressesHere(members)
       })
 
       if (foundGame) {
@@ -172,7 +179,6 @@ const Game = ({ gameId }: { gameId: string }) => {
         foundGame?.wager
       )
       if (socket) {
-        console.log('EMITING REFRESH', gameId)
         socket.emit('refreshGameState', gameId, foundGame?.address1)
       }
     } catch (e) {
@@ -190,10 +196,6 @@ const Game = ({ gameId }: { gameId: string }) => {
   }
 
   const odds = calculateChessOdds(game.fen())
-
-  console.log(odds)
-
-  const blackOdds = 100 - odds.whiteOdds
 
   return (
     <>
@@ -290,11 +292,34 @@ const Game = ({ gameId }: { gameId: string }) => {
             </div>
           )}
         </div>
+        <div
+          className={
+            'fixed p-3 flex flex-row gap-1 bottom-0 left-0 bg-pink-500'
+          }
+        >
+          {isConnected ? 'Connected' : 'Not Connected'} ({transport}){' '}
+        </div>
+        <div
+          className={
+            'fixed p-3 flex flex-row gap-1 bottom-0 right-0 bg-pink-500'
+          }
+        >
+          <AnimatedCounter
+            value={addressesHere?.length}
+            color="white"
+            decimalPrecision={0}
+            fontSize="16px"
+            includeCommas={true}
+          />
+          people here
+        </div>
       </Layout>
       {foundGame && !foundGame?.address2 && !isConnecting && address && (
         <WaitingForOpponent />
       )}
-      {foundGame?.winnerAddress && <GameOverScreen foundGame={foundGame!} />}
+      {(foundGame?.winnerAddress || gameOver) && (
+        <GameOverScreen foundGame={foundGame!} />
+      )}
     </>
   )
 }
@@ -360,58 +385,4 @@ const GameOverScreen = ({ foundGame }: { foundGame: IGame }) => {
       </div>
     </>
   )
-}
-
-interface ChessOdds {
-  whiteOdds: number
-  blackOdds: number
-}
-
-const pieceValues: Record<string, number> = {
-  p: 1,
-  n: 3,
-  b: 3,
-  r: 5,
-  q: 9,
-  k: 0,
-  P: 1,
-  N: 3,
-  B: 3,
-  R: 5,
-  Q: 9,
-  K: 0,
-}
-
-const calculateMaterialValue = (
-  fen: string
-): { white: number; black: number } => {
-  const pieces = fen.split(' ')[0] // Get the pieces part of the FEN
-  let whiteValue = 0
-  let blackValue = 0
-
-  for (const char of pieces) {
-    if (char in pieceValues) {
-      if (char === char.toUpperCase()) {
-        whiteValue += pieceValues[char]
-      } else {
-        blackValue += pieceValues[char]
-      }
-    }
-  }
-
-  return { white: whiteValue, black: blackValue }
-}
-
-const calculateChessOdds = (fen: string): ChessOdds => {
-  const { white, black } = calculateMaterialValue(fen)
-
-  // Simplistic approach: odds based on material balance
-  const totalMaterial = white + black
-  const whiteOdds = (white / totalMaterial) * 100
-  const blackOdds = (black / totalMaterial) * 100
-
-  return {
-    whiteOdds: parseInt(whiteOdds.toFixed(2)),
-    blackOdds: parseInt(blackOdds.toFixed(2)),
-  }
 }

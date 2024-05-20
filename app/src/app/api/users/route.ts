@@ -53,9 +53,9 @@ const calculateUserStats = (users: { [x: string]: any }, games: any) => {
 
   // Calculate wins, losses, and total games
   for (const game of games) {
-    const address1 = game.address1.toLowerCase()
-    const address2 = game.address2.toLowerCase()
-    const winnerAddress = game.winnerAddress.toLowerCase()
+    const address1 = game?.address1?.toLowerCase()
+    const address2 = game?.address2?.toLowerCase()
+    const winnerAddress = game?.winnerAddress?.toLowerCase()
     const totalPot = parseFloat(game.wager) * 2
 
     // Increment game counts
@@ -71,7 +71,8 @@ const calculateUserStats = (users: { [x: string]: any }, games: any) => {
     }
 
     // Increment win/loss counts
-    if (winnerAddress === address1) {
+    // @ts-ignore
+    if (userStats?.[address1] && winnerAddress === address1) {
       // @ts-ignore
       userStats[address1].wins += 1
       // @ts-ignore
@@ -80,7 +81,8 @@ const calculateUserStats = (users: { [x: string]: any }, games: any) => {
       userStats[address2].losses += 1
       // @ts-ignore
       userStats[address2].amountLost += totalPot
-    } else if (winnerAddress === address2) {
+      // @ts-ignore
+    } else if (userStats[address2] && winnerAddress === address2) {
       // @ts-ignore
       userStats[address2].wins += 1
       // @ts-ignore

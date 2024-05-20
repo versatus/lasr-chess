@@ -22,7 +22,7 @@ const ChessAccountContext = createContext<any>(undefined)
 export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
   const router = useRouter()
   const { address, accountInfo, call, requestAccount } = useLasrWallet()
-  const { profile } = useChess()
+  const { profile, fetch } = useChess()
   const { refetchAccount, isFetching: isFetchingAccount } =
     useUserAccount(address)
 
@@ -110,6 +110,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
         await call(payload)
         // await delay(1500)
         // await refetchAccount()
+        await fetch()
         toast.success('Transaction sent successfully')
       } catch (e) {
         if (e instanceof Error) {

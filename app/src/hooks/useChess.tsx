@@ -83,18 +83,6 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
     fetchUsers()
   }, [])
 
-  // useEffect(() => {
-  //   if (programAccountData && programAccountData?.users) {
-  //     setUsers(
-  //       Object.entries(JSON.parse(programAccountData?.users)).map(
-  //         ([key, value]) => {
-  //           return { address: key, username: value }
-  //         }
-  //       )
-  //     )
-  //   }
-  // }, [programAccountData])
-
   const getUser = (address: string) => {
     return leaderBoard?.find(
       (user) => user?.address?.toLowerCase() === address?.toLowerCase()
