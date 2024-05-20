@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { fetchAddressDetails } from '@/lib/clientHelpers'
+import { toast } from 'react-hot-toast'
 
 export default function useUserAccount(address?: string | undefined) {
   const [account, setAccount] = useState<any>(null)
@@ -17,6 +18,10 @@ export default function useUserAccount(address?: string | undefined) {
     fetchAddressDetails({ address })
       .then((accountData) => {
         setAccount(accountData)
+      })
+      .catch(() => {
+        setIsFetching(false)
+        toast.error('Failed to fetch account details')
       })
       .finally(() => setIsFetching(false))
   }
