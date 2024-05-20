@@ -118,6 +118,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
 
       return accountResponse
     } catch (e) {
+      toast.error('Error requesting account')
       throw e
     } finally {
       setIsRequestingAccount(false)
@@ -128,6 +129,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
     setIsConnecting(true)
     if (provider) {
       try {
+        console.log('requesting acct')
         const response = await requestAccount()
         setAddress(response?.address)
         setHasConnected(true)
@@ -142,7 +144,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
       setIsConnecting(false)
       alert('Please install LASR Chrome Extension')
     }
-  }, [provider, requestAccount, setHasConnected])
+  }, [provider])
 
   useEffect(() => {
     // @ts-ignore
@@ -150,7 +152,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
       setTimeout(async () => {
         // @ts-ignore
         setProvider(window?.lasr)
-      }, 500)
+      }, 1500)
     } else {
       setHasWallet(false)
       setIsConnecting(false)

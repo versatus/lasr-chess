@@ -19,10 +19,6 @@ export default function useUserAccount(address?: string | undefined) {
       .then((accountData) => {
         setAccount(accountData)
       })
-      .catch(() => {
-        setIsFetching(false)
-        toast.error('Failed to fetch account details')
-      })
       .finally(() => setIsFetching(false))
   }
 
