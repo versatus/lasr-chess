@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useChessAccount } from '@/hooks/useChessAccount'
+import { useLasrWallet } from '@/providers/LasrWalletProvider'
+import clsx from 'clsx'
 
 export default function Modal({
   title,
@@ -16,7 +18,9 @@ export default function Modal({
   setShowModal: (showModal: boolean) => void
   startNewGame: () => void
 }) {
+  const { verseBalance } = useLasrWallet()
   const { isCreatingGame } = useChessAccount()
+  const insufficientBalance = Number(verseBalance) < Number(wager)
   return (
     <>
       {showModal ? (
@@ -40,9 +44,10 @@ export default function Modal({
                   <input
                     value={wager}
                     onChange={(e) => setWager(e.target.value)}
-                    className={
+                    className={clsx(
+                      insufficientBalance && 'border-red-500',
                       'w-full bg-gray-600 p-4 text-center rounded-md focus:outline-none'
-                    }
+                    )}
                   />
                 </div>
                 <div className="flex items-center justify-end p-6 border-t border-solid border-gray-900 rounded-b">
@@ -54,12 +59,21 @@ export default function Modal({
                     Cancel
                   </button>
                   <button
-                    className="bg-emerald-500 disabled:animate-pulse text-white active:bg-emerald-600 font-bold uppercase text-sm px-6 py-3 rounded shadow hover:shadow-lg outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150"
+                    className={clsx(
+                      'bg-emerald-500  text-white  font-bold uppercase text-sm px-6 py-3 rounded shadow  outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150',
+                      insufficientBalance
+                        ? 'cursor-not-allowed bg-red-500'
+                        : 'hover:shadow-lg active:bg-emerald-600 hover:opacity-50'
+                    )}
                     type="button"
-                    disabled={isCreatingGame}
+                    disabled={isCreatingGame || insufficientBalance}
                     onClick={startNewGame}
                   >
-                    {isCreatingGame ? 'Creating Game...' : 'Create Game'}
+                    {insufficientBalance
+                      ? 'Insufficient Balance..'
+                      : isCreatingGame
+                        ? 'Creating Game...'
+                        : 'Create Game'}
                   </button>
                 </div>
               </div>

@@ -50,7 +50,7 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An error occurred')
       } finally {
-        await delay(2000)
+        await delay(5000)
         setIsLoadingGames(false)
       }
     }

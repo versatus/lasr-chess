@@ -26,7 +26,8 @@ import { useRouter } from 'next/navigation'
 
 const Home: FC = () => {
   const router = useRouter()
-  const { isConnecting, address, hasWallet, connect } = useLasrWallet()
+  const { isConnecting, address, hasWallet, connect, verseBalance } =
+    useLasrWallet()
   const { games: chessGames, isLoadingGames, getUser, leaderBoard } = useChess()
   const {
     isLoading,
@@ -53,6 +54,8 @@ const Home: FC = () => {
       setGames(chessGames)
     }
   }, [chessGames])
+
+  console.log({ verseBalance })
 
   useEffect(() => {
     if (address) {
@@ -270,7 +273,7 @@ const Home: FC = () => {
                     New
                   </button>
                 </div>
-                <div className="mt-4 flex flex-col gap-8">
+                <div className="mt-4 flex flex-col items-center justify-center gap-8">
                   {isLoadingGames ? (
                     <LoadingSpinner />
                   ) : games?.filter(
@@ -278,7 +281,7 @@ const Home: FC = () => {
                         a.gameState === 'initialized' ||
                         a.gameState === 'inProgress'
                     )?.length > 0 ? (
-                    <div className={'items-start flex flex-col'}>
+                    <div className={'items-start w-full flex flex-col'}>
                       <div className={'flex flex-col w-full items-start gap-6'}>
                         {games
                           ?.filter(
@@ -293,12 +296,15 @@ const Home: FC = () => {
                             const moves = getFullmoveNumberFromFEN(game?.fen!)
                             const odds = calculateChessOdds(game.fen!)
 
+                            const insufficientFunds =
+                              parseFloat(verseBalance) < parseFloat(game.wager!)
+
                             // @ts-ignore
                             return (
                               <div
                                 key={game.gameId}
                                 className={
-                                  'flex flex-col gap-2 w-full border border-gray-600 p-4 rounded-md'
+                                  'flex flex-col grow gap-2 w-full border border-gray-600 p-4 rounded-md'
                                 }
                               >
                                 <div className="flex w-full items-center justify-center flex-row">
@@ -309,11 +315,14 @@ const Home: FC = () => {
                                       Game ID:{' '}
                                       <span className={'text-pink-600'}>
                                         {game.gameId}
-                                      </span>{' '}
-                                      -{' '}
-                                      <span className={'italic text-sm'}>
-                                        {game.wager} VERSE
                                       </span>
+                                    </span>
+                                    <span className={'italic text-sm'}>
+                                      {game.wager}{' '}
+                                      <span className={'text-pink-600'}>
+                                        VERSE
+                                      </span>{' '}
+                                      wager
                                     </span>
                                     <div
                                       className={
@@ -386,25 +395,33 @@ const Home: FC = () => {
                                               game.wager!
                                             )
                                           }
-                                          className="bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2"
+                                          className={clsx(
+                                            'bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2',
+                                            insufficientFunds
+                                              ? 'bg-red-500'
+                                              : 'bg-green-500'
+                                          )}
                                           disabled={
                                             game.address1?.toLowerCase() ===
                                               address.toLowerCase() ||
                                             !!game.address2 ||
-                                            isAcceptingGame
+                                            isAcceptingGame ||
+                                            insufficientFunds
                                           }
                                         >
-                                          {isAcceptingGame
-                                            ? 'Joining...'
-                                            : 'Join Game'}
+                                          {insufficientFunds
+                                            ? 'Insufficient Funds..'
+                                            : isAcceptingGame
+                                              ? 'Joining...'
+                                              : 'Join Game'}
                                         </button>
                                       )}
                                       <Link href={`/${game.gameId}`}>
                                         <button
                                           onClick={() => viewGame(game.gameId)}
-                                          className="bg-gray-500 text-white p-2 rounded"
+                                          className="bg-gray-500 text-white hover:opacity-50 transition-all p-2 rounded"
                                         >
-                                          View Game
+                                          Watch
                                         </button>
                                       </Link>
                                     </div>
