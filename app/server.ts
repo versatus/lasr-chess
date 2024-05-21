@@ -117,12 +117,12 @@ app.prepare().then(() => {
       // currentGames = games
       io.emit('currentGames', games)
     })
-  }, 7000)
+  }, 25000)
 
   setInterval(() => {
     const addressList = Object.keys(gameRooms).map((key) => key.split('-')[1])
     addressList.forEach((address1) => updateGameRooms(address1))
-  }, 5000)
+  }, 7000)
 
   const handleDisconnection = (uniqueGameId: string, userId: string) => {
     if (gameRooms[uniqueGameId]) {

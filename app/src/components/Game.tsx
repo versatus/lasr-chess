@@ -26,7 +26,7 @@ const Game = ({ gameId }: { gameId: string }) => {
   const { getUser } = useChess()
   const { address, isConnecting, hasWallet } = useLasrWallet()
   const { submitMove } = useChessAccount()
-  const { game: foundGame, isLoadingGame } = useChessGame(gameId)
+  const { game: foundGame, isLoadingGame, fetchGame } = useChessGame(gameId)
   const [game, setGame] = useState(new Chess())
   const [gameOver, setGameOver] = useState(false)
   // const [socket, setSocket] = useState<any>(null)
@@ -55,6 +55,15 @@ const Game = ({ gameId }: { gameId: string }) => {
       setSocket(temp)
     }
   }, [address, foundGame])
+
+  useEffect(() => {
+    if (foundGame && !foundGame?.address2) {
+      const interval = setInterval(() => fetchGame(), 5000)
+      return () => {
+        clearInterval(interval)
+      }
+    }
+  }, [foundGame])
 
   useEffect(() => {
     function onConnect() {

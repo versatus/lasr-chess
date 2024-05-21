@@ -49,7 +49,7 @@ class LasrChess extends Program {
       const amountNeededForWager = parseAmountToBigInt(wager ?? "0");
       const transferToProgram = buildTransferInstruction({
         from: from,
-        to: "this", // Represents the program's address.
+        to: "this",
         tokenAddress: VERSE_PROGRAM_ADDRESS,
         amount: amountNeededForWager,
       });
@@ -169,7 +169,7 @@ class LasrChess extends Program {
       const txInputs = parseTxInputs(computeInputs);
       const { wager } = txInputs;
       const gameId = generateGameId();
-      const updateProgramDataInstruction = updateTokenData({
+      const updateTokenDataInstruction = updateTokenData({
         accountAddress: from,
         programAddress: THIS,
         data: {
@@ -187,7 +187,7 @@ class LasrChess extends Program {
         amount: amountNeededForWager,
       });
       return new Outputs(computeInputs, [
-        updateProgramDataInstruction,
+        updateTokenDataInstruction,
         transferToProgram,
       ]).toJson();
     } catch (e) {

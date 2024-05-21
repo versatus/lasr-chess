@@ -60,6 +60,18 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const getNewGames = async () => {
+    try {
+      return await axios
+        .get(`/api/addresses/${address}/games`)
+        .then((res) => res.data)
+    } catch (e) {
+      if (e instanceof Error) {
+        toast.error("Couldn't get new game...")
+      }
+    }
+  }
+
   const approve = useCallback(async () => {
     try {
       setIsApproving(true)
@@ -217,6 +229,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
         game,
         submitMove,
         isMakingMove,
+        getNewGames,
         chessAccount,
         isApproving,
       }}

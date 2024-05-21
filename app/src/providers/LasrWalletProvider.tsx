@@ -92,8 +92,13 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
   const [ethBalance, setEthBalance] = useState('')
   const [hasWallet, setHasWallet] = useState(true)
 
+  useEffect(() => {
+    console.log('USE EFFECT FIRED')
+  }, [])
+
   const requestAccount = useCallback(async () => {
     setIsRequestingAccount(true)
+    console.log('requesting account', provider)
     if (!provider) {
       toast.error('Please install LASR Chrome Extension')
     }
@@ -127,7 +132,9 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
 
   const connect = useCallback(async () => {
     setIsConnecting(true)
+    console.log('connect fired')
     if (provider) {
+      console.log('have provider')
       try {
         console.log('requesting acct')
         const response = await requestAccount()
@@ -144,7 +151,7 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
       setIsConnecting(false)
       alert('Please install LASR Chrome Extension')
     }
-  }, [provider])
+  }, [provider, requestAccount])
 
   useEffect(() => {
     // @ts-ignore
@@ -164,11 +171,14 @@ export function LasrWalletProvider({ children }: { children: ReactNode }) {
     if (provider && hasConnected) {
       setTimeout(async () => {
         try {
+          console.log('connecting')
           await connect()
         } catch (e) {
           toast.error('Connection lost. Please reconnect')
         }
       }, 1000)
+    } else if (provider) {
+      setIsConnecting(false)
     }
   }, [provider, hasConnected, connect])
 

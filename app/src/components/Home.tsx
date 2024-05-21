@@ -22,16 +22,12 @@ import { AnimatedCounter } from 'react-animated-counter'
 import { FaPlus } from 'react-icons/fa6'
 import { calculateChessOdds } from '@/lib/clientHelpers'
 import clsx from 'clsx'
+import { useRouter } from 'next/navigation'
 
 const Home: FC = () => {
-  const { isConnecting, address, hasWallet } = useLasrWallet()
-  const {
-    games: chessGames,
-    isLoadingGames,
-    getUser,
-    leaderBoard,
-    fetch,
-  } = useChess()
+  const router = useRouter()
+  const { isConnecting, address, hasWallet, connect } = useLasrWallet()
+  const { games: chessGames, isLoadingGames, getUser, leaderBoard } = useChess()
   const {
     isLoading,
     chessAccount,
@@ -40,19 +36,16 @@ const Home: FC = () => {
     acceptGame,
     isApproved,
     isApproving,
+    getNewGames,
     approve,
   } = useChessAccount()
 
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [wager, setWager] = useState('0')
-
   const [socket, setSocket] = useState<Socket | undefined>()
-
   const [addressesHere, setAddressesHere] = useState<string[]>([])
-
   const [isConnected, setIsConnected] = useState(false)
   const [transport, setTransport] = useState('N/A')
-
   const [games, setGames] = useState<IGame[]>([])
 
   useEffect(() => {
@@ -128,10 +121,11 @@ const Home: FC = () => {
 
   const startNewGame = async () => {
     await createNewGame(wager)
-    setShowCreateModal(false)
-    await delay(1500)
-    await fetch()
-    // socket?.emit('createGame', '', address)
+    // setShowCreateModal(false)
+    await delay(1000)
+    const newGames = await getNewGames()
+    console.log(newGames)
+    router.push(`/${newGames[0].gameId}`)
   }
 
   const joinGame = async (gameId: string, address1: string, wager: string) => {
@@ -172,7 +166,7 @@ const Home: FC = () => {
         >
           {!hasWallet ? (
             <DownloadLasrWallet />
-          ) : isConnecting || !address || isLoading ? (
+          ) : (isConnecting && !address) || isLoading ? (
             <AnimatePresence>
               <motion.div
                 initial={{ opacity: 0 }}
@@ -188,6 +182,13 @@ const Home: FC = () => {
                 <LoadingSpinner />
               </motion.div>
             </AnimatePresence>
+          ) : !address ? (
+            <button
+              onClick={connect}
+              className="hover:bg-pink-900 border border-pink-600 rounded-full p-4 gap-4 height-[69px] flex flex-row justify-center items-center text-pink-600 disabled:opacity-50 "
+            >
+              Connect Wallet
+            </button>
           ) : !chessAccount ? (
             <AnimatePresence>
               <motion.div
