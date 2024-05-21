@@ -3,9 +3,10 @@ FROM node:current as builder
 
 WORKDIR /app
 COPY package*.json ./
-RUN yarn install
+RUN yarn global add bun
+RUN bun install
 COPY . .
-RUN yarn build
+RUN bun build
 
 # Stage 2: Running the app
 FROM node:current
@@ -21,8 +22,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/bin ./bin
 COPY --from=builder /app/node_modules ./node_modules
 
-RUN npm install -g @versatus/versatus-javascript
-RUN yarn install global bun
+RUN yarn global add bun
+RUN bun install -g @versatus/versatus-javascript
 
 EXPOSE 3000
 
