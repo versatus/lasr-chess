@@ -12,6 +12,7 @@ import { useLasrWallet } from '@/providers/LasrWalletProvider'
 import { fetchAddressDetails } from '@/lib/clientHelpers'
 import { IGame } from '@/lib/types'
 import axios from 'axios'
+import { delay } from '@/utils'
 
 const ChessContext = createContext<any>(undefined)
 
@@ -49,6 +50,7 @@ export const ChessProvider = ({ children }: { children: ReactNode }) => {
       } catch (error) {
         setError(error instanceof Error ? error.message : 'An error occurred')
       } finally {
+        await delay(2000)
         setIsLoadingGames(false)
       }
     }

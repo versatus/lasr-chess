@@ -222,18 +222,21 @@ const Home: FC = () => {
                 <div className={'flex items-start flex-col'}>
                   <div className={'font-black text-xl'}>Leaderboard</div>
                   {leaderBoard?.map(
-                    (user: {
-                      address: string
-                      username: string
-                      wins: string
-                      losses: string
-                      games: string
-                      amountWon: string
-                      amountLost: string
-                    }) => {
+                    (
+                      user: {
+                        address: string
+                        username: string
+                        wins: string
+                        losses: string
+                        games: string
+                        amountWon: string
+                        amountLost: string
+                      },
+                      index: number
+                    ) => {
                       return (
                         <div key={user.address}>
-                          {user.username}{' '}
+                          {index + 1}. {user.username}{' '}
                           <span className={'text-xs text-gray-400 italic'}>
                             ({truncateString(user.address, 8)})
                           </span>{' '}
@@ -288,7 +291,6 @@ const Home: FC = () => {
                             const user2 = getUser(game.address2)
                             const winner = getUser(game.winnerAddress!)
                             const moves = getFullmoveNumberFromFEN(game?.fen!)
-
                             const odds = calculateChessOdds(game.fen!)
 
                             // @ts-ignore
