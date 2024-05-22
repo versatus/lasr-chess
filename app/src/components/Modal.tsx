@@ -61,6 +61,9 @@ export default function Modal({
                   <button
                     className={clsx(
                       'bg-emerald-500  text-white  font-bold uppercase text-sm px-6 py-3 rounded shadow  outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150',
+                      isCreatingGame
+                        ? 'animate-pulse opacity-30 cursor-not-allowed'
+                        : '',
                       insufficientBalance
                         ? 'cursor-not-allowed bg-red-500'
                         : 'hover:shadow-lg active:bg-emerald-600 hover:opacity-50'

@@ -7,7 +7,7 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import Layout from '@/components/Layout'
 import ProgramTitle from '@/components/ProgramTitle'
 import { useChessAccount } from '@/hooks/useChessAccount'
-import ChessSignUpForm from '@/components/ChessSignUpForm'
+import ChessSignUpForm from '@/components/chess/ChessSignUpForm'
 import ButtonWithProcessing from '@/components/ButtonWithProcessing'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useChess } from '@/hooks/useChess'
@@ -50,12 +50,10 @@ const Home: FC = () => {
   const [games, setGames] = useState<IGame[]>([])
 
   useEffect(() => {
-    if (chessGames) {
+    if (chessGames && chessGames.length > 0) {
       setGames(chessGames)
     }
   }, [chessGames])
-
-  console.log({ verseBalance })
 
   useEffect(() => {
     if (address) {

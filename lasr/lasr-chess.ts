@@ -23,12 +23,14 @@ import { Chess } from "chess.js";
 const NEW_GAME_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
 const VERSE_PROGRAM_ADDRESS = "0x9f85fb953179fb2418faf4e5560c1ac3717e8c0f";
+const VERSION = "0.0.2";
 
 class LasrChess extends Program {
   constructor() {
     super();
     this.registerContractMethod("acceptGame", this.acceptGame);
     this.registerContractMethod("create", this.create);
+    this.registerContractMethod("forfeit", this.forfeit);
     this.registerContractMethod("makeMove", this.makeMove);
     this.registerContractMethod("newGame", this.newGame);
     this.registerContractMethod("registerUser", this.registerUser);
@@ -84,6 +86,7 @@ class LasrChess extends Program {
         data: {
           type: "chess",
           imgUrl,
+          version: VERSION,
           users: "{}",
           methods,
         },
@@ -113,6 +116,40 @@ class LasrChess extends Program {
       throw e;
     }
   }
+  forfeit(computeInputs: IComputeInputs) {
+    try {
+      const { from } = computeInputs.transaction;
+      const { address1, address2, gameId, wager } =
+        parseTxInputs(computeInputs);
+      validate(gameId, "missing gameId");
+      validate(address1, "missing address1");
+      validate(address2, "missing address2");
+      const payoutAmount = parseAmountToBigInt(wager ?? "0") * BigInt(2);
+      const winner = address1 === from ? address2 : address1;
+      const transferPayoutToWinner = buildTransferInstruction({
+        from: THIS,
+        to: winner,
+        tokenAddress: VERSE_PROGRAM_ADDRESS,
+        amount: payoutAmount,
+      });
+
+      const tokenUpdate = updateTokenData({
+        accountAddress: address1,
+        programAddress: THIS,
+        data: {
+          [`game-${gameId}-winnerAddress`]: winner,
+          [`game-${gameId}-gameState`]: "finished",
+        },
+      });
+
+      return new Outputs(computeInputs, [
+        transferPayoutToWinner,
+        tokenUpdate,
+      ]).toJson();
+    } catch (e) {
+      throw e;
+    }
+  }
   makeMove(computeInputs: IComputeInputs) {
     try {
       const { from } = computeInputs.transaction;
@@ -124,6 +161,8 @@ class LasrChess extends Program {
       const chess = new Chess(fen);
       chess.move(move);
       const instructions = [];
+
+      let updatedAt = Date.now();
 
       if (chess.isGameOver()) {
         const payoutAmount = parseAmountToBigInt(wager ?? "0") * BigInt(2);
@@ -141,6 +180,7 @@ class LasrChess extends Program {
               [`game-${gameId}-fen`]: chess.fen(),
               [`game-${gameId}-winnerAddress`]: from,
               [`game-${gameId}-gameState`]: "finished",
+              [`game-${gameId}-updatedAt`]: updatedAt.toString(),
             },
           }),
           transferPayoutToWinner,
@@ -153,6 +193,7 @@ class LasrChess extends Program {
             data: {
               [`game-${gameId}-fen`]: chess.fen(),
               [`game-${gameId}-gameState`]: "inProgress",
+              [`game-${gameId}-updatedAt`]: updatedAt.toString(),
             },
           }),
         );
@@ -167,8 +208,10 @@ class LasrChess extends Program {
     try {
       const { from } = computeInputs.transaction;
       const txInputs = parseTxInputs(computeInputs);
-      const { wager } = txInputs;
+      const { wager, type } = txInputs;
       const gameId = generateGameId();
+      let createdAt = Date.now();
+      const gameType = type ?? "open";
       const updateTokenDataInstruction = updateTokenData({
         accountAddress: from,
         programAddress: THIS,
@@ -177,6 +220,8 @@ class LasrChess extends Program {
           [`game-${gameId}-address1`]: from,
           [`game-${gameId}-gameState`]: "initialized",
           [`game-${gameId}-wager`]: wager,
+          [`game-${gameId}-createdAt`]: createdAt.toString(),
+          [`game-${gameId}-type`]: gameType,
         },
       });
       const amountNeededForWager = parseAmountToBigInt(wager ?? "0");
@@ -204,7 +249,7 @@ class LasrChess extends Program {
       const currUsers = JSON.parse(programAccountData?.users);
       validate(currUsers, "unable to parse users");
       const addUserToChessMainProgram = updateProgramData({
-        programAddress: THIS,
+        programAddress: programId,
         data: {
           users: validateAndCreateJsonString({
             ...currUsers,

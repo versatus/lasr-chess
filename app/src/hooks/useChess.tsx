@@ -17,12 +17,10 @@ import { delay } from '@/utils'
 const ChessContext = createContext<any>(undefined)
 
 export const ChessProvider = ({ children }: { children: ReactNode }) => {
-  const { address } = useLasrWallet()
   const { data, programAccountData, isFetching, getProgram } = useProgram(
     CHESS_PROGRAM_ADDRESS
   )
   const [users, setUsers] = useState<any[] | undefined>()
-  const [profile, setProfile] = useState<any | undefined>()
   const [isLoadingGames, setIsLoadingGames] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [games, setGames] = useState<IGame[] | undefined>()

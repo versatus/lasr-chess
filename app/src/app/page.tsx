@@ -2,7 +2,7 @@
 import { LasrWalletProvider } from '@/providers/LasrWalletProvider'
 import { Toaster } from 'react-hot-toast'
 import { ChessAccountProvider } from '@/hooks/useChessAccount'
-import Home from '@/components/Home'
+import Home from '@/components/chess/Home'
 import { ChessProvider } from '@/hooks/useChess'
 
 export default function ChessPage() {

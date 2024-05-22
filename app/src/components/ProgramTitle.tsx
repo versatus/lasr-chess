@@ -1,17 +1,20 @@
 import React, { ReactNode } from 'react'
+import WalletAddressPill from '@/components/WalletAddressPill'
 
 const ProgramTitle = ({
   title,
   subtitle,
   imgUrl,
+  address,
 }: {
   title: string
   subtitle: ReactNode
   imgUrl?: string
+  address?: string
 }) => {
   return (
     <>
-      <div className="flex flex-col items-center justify-start p-4 text-white text-xl">
+      <div className="flex flex-col gap-2 items-center justify-start p-4 text-white text-xl">
         {imgUrl && (
           <img
             src={imgUrl}
@@ -29,6 +32,7 @@ const ProgramTitle = ({
             {subtitle}
           </span>
         </span>
+        {address && <WalletAddressPill address={address} />}
       </div>
     </>
   )

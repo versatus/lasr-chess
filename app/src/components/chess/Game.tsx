@@ -18,14 +18,17 @@ import LoadingSpinner from '@/components/LoadingSpinner'
 import { useChess } from '@/hooks/useChess'
 import { Socket } from 'socket.io'
 import { DownloadLasrWallet } from '@/components/DownloadLasrWallet'
-import useSocket from '@/hooks/useSocket'
 import { AnimatedCounter } from 'react-animated-counter'
 import { calculateChessOdds } from '@/lib/clientHelpers'
+import ChessSignUpForm from '@/components/chess/ChessSignUpForm'
+import { CHESS_PROGRAM_ADDRESS } from '@/consts/public'
+import { router } from 'next/client'
 
 const Game = ({ gameId }: { gameId: string }) => {
   const { getUser } = useChess()
   const { address, isConnecting, hasWallet } = useLasrWallet()
-  const { submitMove } = useChessAccount()
+  const { submitMove, hasAccount, forfeit, isForfeitingGame } =
+    useChessAccount()
   const { game: foundGame, isLoadingGame, fetchGame } = useChessGame(gameId)
   const [game, setGame] = useState(new Chess())
   const [gameOver, setGameOver] = useState(false)
@@ -196,6 +199,23 @@ const Game = ({ gameId }: { gameId: string }) => {
     }
   }
 
+  const forfeitGame = async (
+    gameId: string,
+    address1: string,
+    address2: string,
+    wager: string
+  ) => {
+    try {
+      await forfeit(gameId, address1, address2, wager)
+      if (socket) {
+        socket.emit('refreshGameState', gameId, foundGame?.address1)
+      }
+      await router.push('/')
+    } catch (e) {
+      toast.error('Error forfeiting game')
+    }
+  }
+
   const onDrop = (startSquare: Square, endSquare: Square): boolean => {
     makeMove({
       from: startSquare,
@@ -214,13 +234,48 @@ const Game = ({ gameId }: { gameId: string }) => {
           title={'LASR CHESS'}
           subtitle={
             <>
-              <span>Play the timeless game on </span>
-              <span className={'text-pink-600 font-black'}>LASR</span>
+              {/* eslint-disable-next-line react/no-unescaped-entities */}
+              <span>The Queen's Chambit</span>
             </>
           }
           imgUrl={'/cham-chess.webp'}
+          address={CHESS_PROGRAM_ADDRESS}
         />
-        <div className={'bg-gray-800 grow h-[650px] w-[650px] flex flex-col '}>
+        <div className={'flex flex-row gap-2'}>
+          <Link href={'/'}>
+            <button
+              className={
+                'text-xs text-pink-600 font-black border rounded-md hover:bg-pink-600 hover:text-white border-pink-600 p-2'
+              }
+            >
+              RETURN TO LOBBY
+            </button>
+          </Link>
+          {isInGame && foundGame?.address2 && (
+            <button
+              disabled={isForfeitingGame}
+              onClick={() =>
+                forfeitGame(
+                  gameId,
+                  foundGame?.address1!,
+                  foundGame?.address2!,
+                  foundGame?.wager!
+                )
+              }
+              className={clsx(
+                'text-xs text-red-600 font-black border rounded-md hover:bg-red-600 hover:text-white border-red-600 p-2',
+                isForfeitingGame ? 'animate-pulse opacity-30' : ''
+              )}
+            >
+              {isForfeitingGame ? 'FORFEITING GAME' : 'FORFEIT GAME'}
+            </button>
+          )}
+        </div>
+        <div
+          className={
+            'bg-gray-800 mb-20 grow h-[650px] w-[650px] flex flex-col '
+          }
+        >
           {isConnecting ? (
             <div className={'w-full flex flex-col items-center justify-center'}>
               <LoadingSpinner />
@@ -236,6 +291,8 @@ const Game = ({ gameId }: { gameId: string }) => {
               </div>
               <DownloadLasrWallet />
             </div>
+          ) : !hasAccount ? (
+            <ChessSignUpForm />
           ) : (
             <div
               className={clsx(
@@ -273,6 +330,20 @@ const Game = ({ gameId }: { gameId: string }) => {
                       : ''}
                   </span>
                 </span>
+              </div>
+              <div className={'w-full flex flex-row'}>
+                <div>Turn {game?.fen()?.split(' ')[5]}</div>
+                <div className={'grow'} />
+                <span className={'font-black'}>
+                  {parseFloat(foundGame?.wager!) * 2 ?? '--'}{' '}
+                  <span className={'text-pink-600'}>VERSE</span> WAGER
+                </span>
+                <div className={'grow'} />
+                <div>
+                  {/* eslint-disable-next-line react/no-unescaped-entities */}
+                  {foundGame?.fen?.split(' ')[1] === 'w' ? 'White' : 'Black'}'s
+                  Turn
+                </div>
               </div>
               <Chessboard
                 boardOrientation={
@@ -326,7 +397,9 @@ const Game = ({ gameId }: { gameId: string }) => {
       {foundGame && !foundGame?.address2 && !isConnecting && address && (
         <WaitingForOpponent />
       )}
-      {(foundGame?.winnerAddress || gameOver) && (
+      {(foundGame?.winnerAddress ||
+        gameOver ||
+        foundGame?.gameState === 'finished') && (
         <GameOverScreen foundGame={foundGame!} />
       )}
     </>
@@ -368,6 +441,7 @@ const GameOverScreen = ({ foundGame }: { foundGame: IGame }) => {
       }
     }
   }, [foundGame, getUser])
+
   return (
     <>
       <div

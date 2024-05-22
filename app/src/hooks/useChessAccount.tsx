@@ -30,13 +30,18 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
   const [isApproving, setIsApproving] = useState(false)
   const [isCreatingGame, setIsCreatingGame] = useState(false)
   const [isAcceptingGame, setIsAcceptingGame] = useState(false)
+  const [isForfeitingGame, setIsForfeitingGame] = useState(false)
   const [isMakingMove, setIsMakingMove] = useState(false)
   const [game, setGame] = useState('')
   const [isSigningUp, setIsSigningUp] = useState(false)
+  const [hasAccount, setHasAccount] = useState(false)
 
   useEffect(() => {
     if (accountInfo && accountInfo?.data?.programs[CHESS_PROGRAM_ADDRESS]) {
       setChessAccount(accountInfo.data.programs[CHESS_PROGRAM_ADDRESS])
+      setHasAccount(true)
+    } else {
+      setHasAccount(false)
     }
   }, [accountInfo, address, isApproving])
 
@@ -127,9 +132,9 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
       } catch (e) {
         if (e instanceof Error) {
           toast.error(e.message.replace('Custom error:', ''))
+          setIsCreatingGame(false)
         }
       } finally {
-        setIsCreatingGame(false)
       }
     },
     [address, accountInfo, call, refetchAccount]
@@ -164,11 +169,50 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           toast.error(e.message.replace('Custom error:', ''))
         }
       } finally {
-        // setIsAcceptingGame(false)
         await router.push(`/${gameId}`)
       }
     },
     [accountInfo, address, call, refetchAccount, router]
+  )
+
+  const forfeit = useCallback(
+    async (
+      gameId: string,
+      address1: string,
+      address2: string,
+      wager: string
+    ) => {
+      try {
+        setIsForfeitingGame(true)
+        const nonce = getNewNonceForAccount(accountInfo)
+        const payload = {
+          from: address.toLowerCase(),
+          op: 'forfeit',
+          programId: CHESS_PROGRAM_ADDRESS,
+          to: CHESS_PROGRAM_ADDRESS,
+          transactionInputs: JSON.stringify({
+            gameId,
+            address1,
+            address2,
+            wager,
+          }),
+          transactionType: {
+            call: nonce,
+          },
+          value: ZERO_VALUE,
+        }
+        console.log(payload)
+        await call(payload)
+        toast.success('Transaction sent successfully')
+      } catch (e) {
+        setIsForfeitingGame(false)
+        if (e instanceof Error) {
+          toast.error(e.message.replace('Custom error:', ''))
+        }
+      } finally {
+      }
+    },
+    [address, accountInfo, call]
   )
 
   const submitMove = useCallback(
@@ -220,11 +264,14 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
         profile,
         approve,
         createNewGame,
+        forfeit,
         acceptGame,
         isAcceptingGame,
+        hasAccount,
         signUp,
         isSigningUp,
         isCreatingGame,
+        isForfeitingGame,
         isApproved,
         game,
         submitMove,

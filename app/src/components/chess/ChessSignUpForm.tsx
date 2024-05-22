@@ -5,7 +5,7 @@ import { useLasrWallet } from '@/providers/LasrWalletProvider'
 import axios from 'axios'
 import { AnimatePresence, motion } from 'framer-motion'
 import { delay } from '@/utils'
-import LasrChessTitle from '@/components/ChessTitle'
+import LasrChessTitle from '@/components/chess/ChessTitle'
 import { useChessAccount } from '@/hooks/useChessAccount'
 import { sign } from '@noble/secp256k1'
 
