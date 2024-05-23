@@ -8,7 +8,7 @@
     "start": "NODE_ENV=production bun server.ts"
   },
   "dependencies": {
-    "@versatus/versatus-javascript": "^0.1.162",
+    "@versatus/versatus-javascript": "^0.1.164",
     "axios": "^1.6.8",
     "bun": "^1.1.9",
     "chess.js": "^1.0.0-beta.8",

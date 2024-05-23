@@ -94,7 +94,6 @@ class LasrChess extends Program {
       const distributionInstruction = buildTokenDistribution({
         programId: THIS,
         initializedSupply,
-        currentSupply: "0",
         to: THIS,
         nonFungible: true,
       });
