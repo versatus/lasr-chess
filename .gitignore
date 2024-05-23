@@ -42,3 +42,5 @@ app/node_modules
 lasr/.lasr
 lasr/node_modules
 lasr/build
+lasr/bun.lockb
+app/bun.lockb
