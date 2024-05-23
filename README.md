@@ -10,7 +10,7 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 This application has two parts.
 
 ## Dependencies
-- Node
+- Node v18+
 
 ### Clone Repo
 ```bash
