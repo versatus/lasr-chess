@@ -18,7 +18,8 @@ git clone git@github.com:versatus/lasr-chess.git
 cd lasr-chess
 ```
 This application has two parts.
-A deployed chess program that runs on LASR and then the webapp which allows users to interact with the program.
+A chess program that runs on LASR and a webapp which allows users to interact with the program.
+Let's deploy the chess program to LASR.
 
 
 ### Deploy Chess Program to LASR
@@ -26,6 +27,7 @@ A deployed chess program that runs on LASR and then the webapp which allows user
 cd lasr
 npm install
 npx lasrctl build lasr-chess.ts
+# this command will download an internal cli depending on os arch (arm64 & x86_64, windows soon)
 npx lasrctl test -b lasr-chess -i lasr-chess-inputs
 ```
 This next command will deploy the main chess program. You should change the initialized and total
@@ -33,7 +35,7 @@ supply to however many available seats you want to have.
 ```bash
 npx lasrctl deploy -b lasr-chess -s CHESS -p "LASRChess" --initializedSupply 10 --totalSupply 10
 ```
-After successful deployment _(don't be afraid to run it again if it fails..)_, you'll receive
+After successful program deployment _(don't be afraid to run it again if it fails..)_, you'll receive
 back a program address that you need to put into the 
 `.env` file in the webapp.
 
