@@ -1,4 +1,4 @@
-# LASR CHESS
+# LASRChess
 A peer-to-peer game that allows users to play chess with their friends in real-time, all on-chain.
 
 ## Features
@@ -10,7 +10,7 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 This application has two parts. 
 
 The LASRChess program that runs on LASR and then the webapp which allows users to interact with the game.
-### Deploy Program to LASR
+### Deploy Chess Program to LASR
 ```bash
 cd lasr
 npm install
