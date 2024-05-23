@@ -2,9 +2,10 @@
 A peer-to-peer game that allows users to play chess with their friends in real-time, all on-chain.
 
 ## Features
-- Play chess with your friends in real-time
+- Play chess with your friends in real-time (websockets)
 - Bet on the outcome of the game
 - All moves are stored on-chain with LASR
+- Leverages (Chess.js)[https://github.com/jhlywa/chess.js] in the LASR program
 
 ## Getting Started
 This application has two parts.
