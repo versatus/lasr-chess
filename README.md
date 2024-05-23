@@ -7,11 +7,11 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 - All moves are stored on-chain with LASR
 - Leverages [Chess.js](https://github.com/jhlywa/chess.js) in the LASR program
 
-## Getting Started
-This application has two parts.
-
 ## Dependencies
 - Node v18+
+
+## Getting Started
+This application has two parts.
 
 ### Clone Repo
 ```bash
