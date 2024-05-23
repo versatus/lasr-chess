@@ -19,7 +19,7 @@ git clone git@github.com:versatus/lasr-chess.git
 cd lasr-chess
 ```
 
-The LASRChess program that runs on LASR and then the webapp which allows users to interact with the game.
+A deployed chess program that runs on LASR and then the webapp which allows users to interact with the program.
 
 
 ### Deploy Chess Program to LASR
