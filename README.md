@@ -26,6 +26,23 @@ After successful deployment _(don't be afraid to run it again if it fails..)_, y
 back a program address that you need to put into the 
 `.env` file in the webapp.
 
+```shell
+Program created successfully.
+==> programAddress: 0xe4a4122605d01eaf39e9cf6f0b257f9f72386a4a
+==> symbol: CHESS
+==> network: stable
+==> tokenName: LASRChess
+==> initializedSupply: 10
+==> totalSupply: 10
+==> recipientAddress: 0xe4a4122605d01eaf39e9cf6f0b257f9f72386a4a
+======
+======
+======
+======
+>>>>>>>>>>> View Program on LASR Playground:
+https://playground.versatus.io/programs/0xe4a4122605d01eaf39e9cf6f0b257f9f72386a4a
+```
+
 
 Now we're going to check out the keypair which we'll use later.
 ```bash
@@ -64,7 +81,7 @@ Now lets add the program address, your new address and secret_key to the `.env` 
 ```dotenv
 LASR_RPC_URL=http://lasr-sharks.versatus.io:9292
 CHESS_OWNER_PRIVATE_KEY="secret_key"
-NEXT_PUBLIC_CHESS_PROGRAM_ADDRESS=YOUR_PROGRAM_ADDRESS
+NEXT_PUBLIC_CHESS_PROGRAM_ADDRESS="programAddress"
 NEXT_PUBLIC_CHESS_OWNER_ADDRESS="address"
 NEXT_PUBLIC_VERSE_PROGRAM_ADDRESS=0x9f85fb953179fb2418faf4e5560c1ac3717e8c0f
 ```
