@@ -57,7 +57,7 @@ from the previous step.
 cp .env.example .env
 ```
 
-Open up that file in your favorite IDE.
+Open up the `.env` file in your favorite IDE.
 
 Now lets add the program address, your new address and secret_key to the `.env` file.
 
