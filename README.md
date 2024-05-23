@@ -10,7 +10,7 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 This application has two parts. 
 
 The LASRChess program that runs on LASR and then the webapp which allows users to interact with the game.
-### Deploy LASRChess 
+### Deploy Program to LASR
 ```bash
 cd lasr
 npm install
@@ -44,7 +44,7 @@ cat .lasr/wallet/keypair.json
 
 Cool! Now we're going to install the webapp and get it running.
 
-### Webapp
+### Run Webapp
 ```bash
 cd ../app
 npm install
