@@ -7,9 +7,20 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 - All moves are stored on-chain with LASR
 
 ## Getting Started
-This application has two parts. 
+This application has two parts.
+
+## Dependencies
+- Node
+
+### Clone Repo
+```bash
+git clone git@github.com:versatus/lasr-chess.git
+cd lasr-chess
+```
 
 The LASRChess program that runs on LASR and then the webapp which allows users to interact with the game.
+
+
 ### Deploy Chess Program to LASR
 ```bash
 cd lasr
