@@ -21,9 +21,7 @@ import {
 import { Chess } from "chess.js";
 
 const NEW_GAME_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-
 const VERSE_PROGRAM_ADDRESS = "0x9f85fb953179fb2418faf4e5560c1ac3717e8c0f";
-const VERSION = "0.0.2";
 
 class LasrChess extends Program {
   constructor() {
@@ -86,7 +84,6 @@ class LasrChess extends Program {
         data: {
           type: "chess",
           imgUrl,
-          version: VERSION,
           users: "{}",
           methods,
         },

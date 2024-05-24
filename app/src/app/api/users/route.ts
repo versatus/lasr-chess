@@ -8,16 +8,22 @@ export async function GET() {
       throw new Error('chess address not found')
     }
 
+    console.log('getting all users')
+
     const response = await getAccount(CHESS_PROGRAM_ADDRESS)
     const users = JSON.parse(response.programAccountData.users)
     const chessGames = []
-    for await (const [address, username] of Object.entries(users)) {
-      const account = await getAccount(address)
-      const games = extractGamesServer(
-        account.programs[CHESS_PROGRAM_ADDRESS].data
-      )
-      if (games?.length > 0) {
-        chessGames.push(...games)
+    for await (const [address] of Object.entries(users)) {
+      try {
+        const account = await getAccount(address)
+        const games = extractGamesServer(
+          account.programs[CHESS_PROGRAM_ADDRESS].data
+        )
+        if (games?.length > 0) {
+          chessGames.push(...games)
+        }
+      } catch (e) {
+        console.error(`couldn't get ${address}`)
       }
     }
 
@@ -34,10 +40,8 @@ export async function GET() {
 }
 
 const calculateUserStats = (users: { [x: string]: any }, games: any) => {
-  // Initialize user stats
   const userStats = {}
 
-  // Populate initial user data
   for (const address in users) {
     // @ts-ignore
     userStats[address.toLowerCase()] = {
@@ -51,14 +55,12 @@ const calculateUserStats = (users: { [x: string]: any }, games: any) => {
     }
   }
 
-  // Calculate wins, losses, and total games
   for (const game of games) {
     const address1 = game?.address1?.toLowerCase()
     const address2 = game?.address2?.toLowerCase()
     const winnerAddress = game?.winnerAddress?.toLowerCase()
     const totalPot = parseFloat(game.wager) * 2
 
-    // Increment game counts
     // @ts-ignore
     if (userStats[address1]) {
       // @ts-ignore
@@ -70,7 +72,6 @@ const calculateUserStats = (users: { [x: string]: any }, games: any) => {
       userStats[address2].games += 1
     }
 
-    // Increment win/loss counts
     // @ts-ignore
     if (userStats?.[address1] && winnerAddress === address1) {
       // @ts-ignore
