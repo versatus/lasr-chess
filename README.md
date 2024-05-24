@@ -31,8 +31,10 @@ npx lasrctl build lasr-chess.ts
 # this command will download an internal cli depending on os arch (arm64 & x86_64, windows soon)
 npx lasrctl test -b lasr-chess -i lasr-chess-inputs
 ```
-This next command will deploy the main chess program. You should change the initialized and total
-supply to however many available seats you want to have. 
+This next command will deploy the main chess program. 
+
+_NOTE: You should change the initialized and total
+supply to however many available seats you want to have._ 
 ```bash
 npx lasrctl deploy -b lasr-chess -s CHESS -p "LASRChess" --initializedSupply 10 --totalSupply 10
 ```
