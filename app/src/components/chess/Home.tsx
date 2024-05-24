@@ -240,8 +240,8 @@ const Home: FC = () => {
                           {index + 1}. {user.username}{' '}
                           <span className={'text-xs text-gray-400 italic'}>
                             ({truncateString(user.address, 8)})
-                          </span>{' '}
-                          - {user.wins} wins{' '}
+                          </span>
+                          : {user.wins} wins{' '}
                           <span className={'text-xs text-green-600'}>
                             (+{user.amountWon} VERSE)
                           </span>
