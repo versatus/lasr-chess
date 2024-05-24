@@ -102,7 +102,7 @@ NEXT_PUBLIC_CHESS_OWNER_ADDRESS="address"
 NEXT_PUBLIC_VERSE_PROGRAM_ADDRESS=0x9f85fb953179fb2418faf4e5560c1ac3717e8c0f
 ```
 
-Now we can start the webapp.
+Now lets build the webapp and start it.
 
 ```bash
 npm run build
