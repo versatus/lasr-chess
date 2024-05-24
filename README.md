@@ -33,8 +33,8 @@ npx lasrctl test -b lasr-chess -i lasr-chess-inputs
 ```
 This next command will deploy the main chess program. 
 
-_NOTE: You should change the initialized and total
-supply to however many available seats you want to have._ 
+_NOTE: You can change the initialized and total
+supply flags to however many available seats you want to have._ 
 ```bash
 npx lasrctl deploy -b lasr-chess -s CHESS -p "LASRChess" --initializedSupply 10 --totalSupply 10
 ```
