@@ -105,7 +105,8 @@ NEXT_PUBLIC_VERSE_PROGRAM_ADDRESS=0x9f85fb953179fb2418faf4e5560c1ac3717e8c0f
 Now we can start the webapp.
 
 ```bash
-npm run dev
+npm run build
+npm run start
 ```
 
 Open up [http:localhost:3000](http:localhost:3000) in your browser and you should see the app running.
