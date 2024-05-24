@@ -87,7 +87,7 @@ Now we need to update the local `.env` file with the program address and keypair
 from the previous step.
 
 ```bash
-cp .env.example .env
+mv .env.example .env
 ```
 
 Open up the `.env` file in your favorite IDE.
