@@ -92,7 +92,7 @@ mv .env.example .env
 
 Open up the `.env` file in your favorite IDE.
 
-Now, lets add the `programAddress`, your new `address` and `secret_key` to the `.env` file.
+Now, lets add the recently deployed program's `programAddress` and your new `address` & `secret_key` from the keypair file to the `.env` file.
 
 ```dotenv
 LASR_RPC_URL=http://lasr-sharks.versatus.io:9292
