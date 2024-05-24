@@ -29,7 +29,7 @@ cd lasr
 npm install
 npx lasrctl build lasr-chess.ts
 # this command will download an internal cli depending on os arch (arm64 & x86_64, windows soon)
-npx lasrctl test --build lasr-chess --inputs lasr-chess-inputs
+npx lasrctl test --build lasr-chess --inputJson lasr-chess-inputs
 ```
 This next command will deploy the main chess program. 
 
