@@ -1,9 +1,9 @@
 # LASRChess
-A peer-to-peer game that allows users to play chess with their friends in real-time, all on-chain.
+A peer-to-peer game that allows users to play and bet on chess with their friends in real-time, all on-chain.
 
 ## Features
 - Play chess with your friends in real-time (websockets)
-- Place a wager (VERSE) the outcome of the game
+- Place a wager (VERSE) on the outcome of the game
 - All moves are checked and stored on-chain within LASR
 - Runs [Chess.js](https://github.com/jhlywa/chess.js) inside of the LASR program
 - Runs [react-chessboard](https://github.com/Clariity/react-chessboard) in the webapp
