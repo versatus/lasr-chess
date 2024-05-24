@@ -92,7 +92,7 @@ cp .env.example .env
 
 Open up the `.env` file in your favorite IDE.
 
-Now lets add the program address, your new address and secret_key to the `.env` file.
+Now, lets add the program address, your new address, and secret_key to the `.env` file.
 
 ```dotenv
 LASR_RPC_URL=http://lasr-sharks.versatus.io:9292
