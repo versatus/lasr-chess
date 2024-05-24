@@ -5,8 +5,8 @@ A peer-to-peer game that allows users to play chess with their friends in real-t
 - Play chess with your friends in real-time (websockets)
 - Place a wager (VERSE) the outcome of the game
 - All moves are checked and stored on-chain with LASR
-- Leverages [Chess.js](https://github.com/jhlywa/chess.js) and it's headless nature in the LASR program
-- Leverages [react-chessboard](https://github.com/Clariity/react-chessboard) for the frontend
+- Runs [Chess.js](https://github.com/jhlywa/chess.js) inside of the LASR program
+- Runs [react-chessboard](https://github.com/Clariity/react-chessboard) in the webapp
 
 ## Dependencies
 - Node v18+
