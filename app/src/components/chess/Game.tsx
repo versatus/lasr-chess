@@ -23,6 +23,9 @@ import { calculateChessOdds } from '@/lib/clientHelpers'
 import ChessSignUpForm from '@/components/chess/ChessSignUpForm'
 import { CHESS_PROGRAM_ADDRESS } from '@/consts/public'
 import { router } from 'next/client'
+import Countdown from 'react-countdown'
+//@ts-ignore
+import useSound from 'use-sound'
 
 const Game = ({ gameId }: { gameId: string }) => {
   const { getUser } = useChess()
@@ -48,6 +51,8 @@ const Game = ({ gameId }: { gameId: string }) => {
   const [socket, setSocket] = useState<Socket | undefined>()
   const [isConnected, setIsConnected] = useState(false)
   const [transport, setTransport] = useState('N/A')
+
+  const [play, { stop }] = useSound('/sounds/ringtone.mp3')
 
   useEffect(() => {
     if (address) {
@@ -140,6 +145,14 @@ const Game = ({ gameId }: { gameId: string }) => {
   }, [game, isWhite])
 
   useEffect(() => {
+    if (isCurrentTurn) {
+      play()
+    } else {
+      stop()
+    }
+  }, [isCurrentTurn, play, stop])
+
+  useEffect(() => {
     if (game.isGameOver() || foundGame?.winnerAddress) {
       setGameOver(true)
     }
@@ -148,14 +161,21 @@ const Game = ({ gameId }: { gameId: string }) => {
   useEffect(() => {
     if (address && foundGame && socket) {
       socket.emit('joinGame', gameId, foundGame.address1, address)
-
       socket.on('updateFen', (fen: string) => {
+        console.log('updateFen', fen)
         const gameCopy = new Chess()
-        gameCopy.load(fen)
-        setGame(gameCopy)
-        if (gameCopy.isGameOver()) {
-          setGameOver(true)
+        if (fen !== game.fen()) {
+          gameCopy.load(fen)
+          setGame(gameCopy)
+          if (gameCopy.isGameOver()) {
+            setGameOver(true)
+          }
         }
+        // gameCopy.load(fen)
+        // setGame(gameCopy)
+        // if (gameCopy.isGameOver()) {
+        //   setGameOver(true)
+        // }
       })
 
       socket.on('gameMembers', (members: any[]) => {
@@ -395,7 +415,7 @@ const Game = ({ gameId }: { gameId: string }) => {
         </div>
       </Layout>
       {foundGame && !foundGame?.address2 && !isConnecting && address && (
-        <WaitingForOpponent />
+        <WaitingForOpponent foundGame={foundGame} />
       )}
       {(foundGame?.winnerAddress ||
         gameOver ||
@@ -408,7 +428,7 @@ const Game = ({ gameId }: { gameId: string }) => {
 
 export default Game
 
-const WaitingForOpponent = () => {
+const WaitingForOpponent = ({ foundGame }: { foundGame: IGame }) => {
   return (
     <>
       <div
@@ -417,6 +437,8 @@ const WaitingForOpponent = () => {
         }
       >
         <div className={'text-6xl font-black'}>WAITING FOR OPPONENT</div>
+        {/*@ts-ignore*/}
+        <Countdown date={foundGame.createdAt + 120000} />
       </div>
     </>
   )

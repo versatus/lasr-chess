@@ -146,6 +146,7 @@ class LasrChess extends Program {
       throw e;
     }
   }
+
   makeMove(computeInputs: IComputeInputs) {
     try {
       const { from } = computeInputs.transaction;
@@ -157,7 +158,6 @@ class LasrChess extends Program {
       const chess = new Chess(fen);
       chess.move(move);
       const instructions = [];
-
       let updatedAt = Date.now();
 
       if (chess.isGameOver()) {

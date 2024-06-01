@@ -32,6 +32,7 @@ export async function GET() {
     return NextResponse.json(usersStats)
   } catch (e) {
     if (e instanceof Error) {
+      console.error(e.message)
       return NextResponse.json({ error: e.message }, { status: 500 })
     } else {
       return NextResponse.json({ error: 'An error occurred' }, { status: 500 })
@@ -79,7 +80,8 @@ const calculateUserStats = (users: { [x: string]: any }, games: any) => {
       // @ts-ignore
       userStats[address1].amountWon += totalPot
       // @ts-ignore
-      userStats[address2].losses += 1
+
+      userStats[address2].losses ? (userStats[address2].losses += 1) : null
       // @ts-ignore
       userStats[address2].amountLost += totalPot
       // @ts-ignore

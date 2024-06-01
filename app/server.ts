@@ -45,7 +45,7 @@ app.prepare().then(() => {
         chessGames.push(...games)
       }
     }
-    return chessGames.filter((g: IGame) => g.gameState !== 'finished')
+    return chessGames.filter((g: IGame) => g.gameState === 'inProgress')
   }
 
   const fetchAccountData = async (address1: string): Promise<IGame[]> => {
@@ -72,11 +72,11 @@ app.prepare().then(() => {
     userId: string
   ) => {
     const games = await fetchAccountData(address1)
-    console.log('games', games)
     const game = games.find((g: any) => g.gameId === gameId)
     if (game) {
       const { fen } = game
-      const uniqueGameId = `${gameId}-${address1}`
+      const uniqueGameId = `${gameId}-${address1.toLowerCase()}`
+      console.log('gameRooms[uniqueGameId].fen', gameRooms[uniqueGameId]?.fen)
       if (!gameRooms[uniqueGameId]) {
         console.log('DIDNT FIND GAME ROOM! MAKING ANEW')
         gameRooms[uniqueGameId] = {
@@ -84,7 +84,11 @@ app.prepare().then(() => {
           fen: fen!,
         }
         gameRooms[uniqueGameId].members.add(userId)
-      } else if (gameRooms[uniqueGameId].fen !== fen) {
+      } else if (
+        gameRooms[uniqueGameId].fen &&
+        gameRooms[uniqueGameId].fen !== fen
+      ) {
+        console.log('update fen')
         gameRooms[uniqueGameId].fen = fen!
         io.to(uniqueGameId).emit('updateFen', fen)
       }
@@ -96,15 +100,16 @@ app.prepare().then(() => {
     for (const game of games) {
       const { gameId, fen, gameState } = game
       if (gameState === 'finished') return
-      const uniqueGameId = `${gameId}-${address1}`
+      const uniqueGameId = `${gameId}-${address1.toLowerCase()}`
       if (!gameRooms[uniqueGameId]) {
         console.log('game not found, creating')
         gameRooms[uniqueGameId] = {
           members: new Set(),
           fen: fen!,
         }
-      } else if (gameRooms[uniqueGameId].fen !== fen) {
-        gameRooms[uniqueGameId].fen = fen!
+      } else if (gameRooms[uniqueGameId].fen !== fen && fen) {
+        console.log("updating game's fen")
+        gameRooms[uniqueGameId].fen = fen
         io.to(uniqueGameId).emit('updateFen', fen)
       }
     }
@@ -115,6 +120,22 @@ app.prepare().then(() => {
     fetchAllNonFinishedGames().then((games) => {
       console.log(games)
       // currentGames = games
+      games.map((game) => {
+        const { gameId, address1, address2 } = game
+        const uniqueGameId = `${gameId}-${address1?.toLowerCase()}`
+        console.log('uniqueGameId', uniqueGameId)
+        if (
+          gameRooms[uniqueGameId] &&
+          gameRooms[uniqueGameId]?.fen !== game.fen
+        ) {
+          gameRooms[uniqueGameId].fen = String(game.fen)
+          io.to(uniqueGameId).emit('updateFen', game.fen)
+        } else {
+          console.log('SAME FEN')
+        }
+      })
+
+      console.log('gameRooms', gameRooms)
       io.emit('currentGames', games)
     })
   }, 25000)
@@ -175,7 +196,7 @@ app.prepare().then(() => {
     socket.on(
       'joinGame',
       async (gameId: string, address1: string, userId: string) => {
-        const uniqueGameId = `${gameId}-${address1}`
+        const uniqueGameId = `${gameId}-${address1.toLowerCase()}`
 
         if (!gameRooms[uniqueGameId]) {
           await updateGameRoom(gameId, address1, userId)
@@ -193,6 +214,7 @@ app.prepare().then(() => {
           const accountData = await fetchAccountData(address1)
           const game = accountData.find((g: any) => g.gameId === gameId)
           if (game && gameRooms[uniqueGameId]) {
+            console.log('wooooo', gameRooms[uniqueGameId])
             if (gameRooms[uniqueGameId].fen) {
               gameRooms[uniqueGameId].fen = game.fen!
             }
@@ -211,7 +233,7 @@ app.prepare().then(() => {
     socket.on(
       'leaveGame',
       (gameId: string, address1: string, userId: string) => {
-        const uniqueGameId = `${gameId}-${address1}`
+        const uniqueGameId = `${gameId}-${address1.toLowerCase()}`
         if (gameRooms[uniqueGameId]) {
           gameRooms[uniqueGameId].members.delete(userId)
 
@@ -229,11 +251,17 @@ app.prepare().then(() => {
     )
 
     socket.on('refreshGameState', async (gameId: string, address1: string) => {
-      const uniqueGameId = `${gameId}-${address1}`
+      const uniqueGameId = `${gameId}-${address1.toLowerCase()}`
       const games = await fetchAccountData(address1)
-      const game = games.find((g: any) => g.gameId === gameId)
+      const game = games?.find((g: any) => g.gameId === gameId)
 
-      if (game) {
+      console.log(
+        'REFRESHING GAME STATE',
+        gameRooms[uniqueGameId],
+        game && gameRooms[uniqueGameId]
+      )
+
+      if (game && gameRooms[uniqueGameId]) {
         gameRooms[uniqueGameId].fen = game.fen!
         io.to(uniqueGameId).emit('updateFen', game.fen)
       }
