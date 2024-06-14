@@ -6,6 +6,8 @@ export interface IGame {
   gameState?: string
   wager?: string
   winnerAddress?: string
+  createdAt?: string
+  type?: string
 }
 
 export interface GameRoom {

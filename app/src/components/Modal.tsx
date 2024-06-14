@@ -16,11 +16,15 @@ export default function Modal({
   setWager: (wager: string) => void
   showModal: boolean
   setShowModal: (showModal: boolean) => void
-  startNewGame: () => void
+  startNewGame: (gameType: string, opponentAddress?: string) => void
 }) {
   const { verseBalance } = useLasrWallet()
   const { isCreatingGame } = useChessAccount()
+  const [selectedGameType, setSelectedGameType] = useState<string>('Open Game')
+  const [opponentAddress, setOpponentAddress] = useState<string>('')
   const insufficientBalance = Number(verseBalance) < Number(wager)
+  const isClosedGame = selectedGameType === 'Closed Game'
+  const isBotGame = selectedGameType === 'Bot Game'
   return (
     <>
       {showModal ? (
@@ -40,15 +44,50 @@ export default function Modal({
                   </button>
                 </div>
                 <div className="relative p-6 flex-auto flex flex-col gap-2 min-w-[400px]">
-                  <p>Select the wager amount (VERSE)</p>
-                  <input
-                    value={wager}
-                    onChange={(e) => setWager(e.target.value)}
-                    className={clsx(
-                      insufficientBalance && 'border-red-500',
-                      'w-full bg-gray-600 p-4 text-center rounded-md focus:outline-none'
+                  <div className={'flex flex-col md:flex-row gap-2'}>
+                    {['Open Game', 'Closed Game', 'Bot Game'].map(
+                      (gameType) => (
+                        <button
+                          key={gameType}
+                          className={clsx(
+                            'bg-gray-600 text-white border border-transparent font-bold uppercase text-sm px-6 py-3 rounded shadow outline-none focus:outline-none mr-1 mb-1 ease-linear transition-all duration-150',
+                            gameType === selectedGameType
+                              ? 'bg-emerald-500 border-yellow-500'
+                              : 'hover:shadow-lg active:bg-emerald-600 hover:opacity-50'
+                          )}
+                          onClick={() => setSelectedGameType(gameType)}
+                        >
+                          {gameType}
+                        </button>
+                      )
                     )}
-                  />
+                  </div>
+                  {isClosedGame && (
+                    <div className={'flex flex-row'}>
+                      <input
+                        value={opponentAddress}
+                        onChange={(e) => setOpponentAddress(e.target.value)}
+                        placeholder={"Opponent's address"}
+                        className={clsx(
+                          insufficientBalance && 'border-red-500',
+                          'w-full bg-gray-600 p-4 text-center rounded-md focus:outline-none'
+                        )}
+                      />
+                    </div>
+                  )}
+                  {!isBotGame && (
+                    <div>
+                      <p>Select the wager amount (VERSE)</p>
+                      <input
+                        value={wager}
+                        onChange={(e) => setWager(e.target.value)}
+                        className={clsx(
+                          insufficientBalance && 'border-red-500',
+                          'w-full bg-gray-600 p-4 text-center rounded-md focus:outline-none'
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className="flex items-center justify-end p-6 border-t border-solid border-gray-900 rounded-b">
                   <button
@@ -70,7 +109,9 @@ export default function Modal({
                     )}
                     type="button"
                     disabled={isCreatingGame || insufficientBalance}
-                    onClick={startNewGame}
+                    onClick={() =>
+                      startNewGame(selectedGameType, opponentAddress)
+                    }
                   >
                     {insufficientBalance
                       ? 'Insufficient Balance..'

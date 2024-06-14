@@ -23,7 +23,6 @@ import { calculateChessOdds } from '@/lib/clientHelpers'
 import ChessSignUpForm from '@/components/chess/ChessSignUpForm'
 import { CHESS_PROGRAM_ADDRESS } from '@/consts/public'
 import { router } from 'next/client'
-import Countdown from 'react-countdown'
 //@ts-ignore
 import useSound from 'use-sound'
 
@@ -231,9 +230,7 @@ const Game = ({ gameId }: { gameId: string }) => {
         socket.emit('refreshGameState', gameId, foundGame?.address1)
       }
       await router.push('/')
-    } catch (e) {
-      toast.error('Error forfeiting game')
-    }
+    } catch (e) {}
   }
 
   const onDrop = (startSquare: Square, endSquare: Square): boolean => {
@@ -437,8 +434,6 @@ const WaitingForOpponent = ({ foundGame }: { foundGame: IGame }) => {
         }
       >
         <div className={'text-6xl font-black'}>WAITING FOR OPPONENT</div>
-        {/*@ts-ignore*/}
-        <Countdown date={foundGame.createdAt + 120000} />
       </div>
     </>
   )
@@ -452,9 +447,13 @@ const GameOverScreen = ({ foundGame }: { foundGame: IGame }) => {
   const [loser, setLoser] = useState<
     { address: string; username: string } | undefined
   >()
+
   useEffect(() => {
     if (foundGame) {
-      if (foundGame.winnerAddress === foundGame.address1) {
+      if (
+        foundGame.winnerAddress?.toLowerCase() ===
+        foundGame.address1?.toLowerCase()
+      ) {
         setWinner(getUser(foundGame.address1))
         setLoser(getUser(foundGame.address2))
       } else {

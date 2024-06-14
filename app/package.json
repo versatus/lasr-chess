@@ -8,11 +8,13 @@
     "start": "NODE_ENV=production bun server.ts"
   },
   "dependencies": {
+    "@types/d3": "^7.4.3",
     "@versatus/versatus-javascript": "^0.1.164",
     "axios": "^1.6.8",
     "bun": "^1.1.9",
     "chess.js": "^1.0.0-beta.8",
     "clsx": "^2.1.0",
+    "d3": "^7.9.0",
     "framer-motion": "^11.1.1",
     "next": "14.2.3",
     "prettier": "^3.2.5",

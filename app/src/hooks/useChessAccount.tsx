@@ -106,7 +106,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
   }, [address, accountInfo, call, refetchAccount])
 
   const createNewGame = useCallback(
-    async (wager: string) => {
+    async (wager: string, gameType: string, opponentAddress?: string) => {
       try {
         setIsCreatingGame(true)
         const nonce = getNewNonceForAccount(accountInfo)
@@ -117,7 +117,9 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           to: CHESS_PROGRAM_ADDRESS,
           transactionInputs: JSON.stringify({
             address1: address,
+            address2: opponentAddress,
             wager,
+            gameType,
           }),
           transactionType: {
             call: nonce,
@@ -125,10 +127,8 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           value: ZERO_VALUE,
         }
         await call(payload)
-        // await delay(1500)
-        // await refetchAccount()
         await fetch()
-        toast.success('Transaction sent successfully')
+        toast.success('Transaction sent successfully... Redirecting to game.')
       } catch (e) {
         if (e instanceof Error) {
           toast.error(e.message.replace('Custom error:', ''))
@@ -137,7 +137,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
       } finally {
       }
     },
-    [address, accountInfo, call, refetchAccount]
+    [accountInfo, address, call, fetch]
   )
 
   const acceptGame = useCallback(
@@ -201,7 +201,6 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           },
           value: ZERO_VALUE,
         }
-        console.log(payload)
         await call(payload)
         toast.success('Transaction sent successfully')
       } catch (e) {
@@ -210,6 +209,7 @@ export const ChessAccountProvider = ({ children }: { children: ReactNode }) => {
           toast.error(e.message.replace('Custom error:', ''))
         }
       } finally {
+        await router.push(`/`)
       }
     },
     [address, accountInfo, call]

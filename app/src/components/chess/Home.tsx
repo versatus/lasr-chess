@@ -50,10 +50,16 @@ const Home: FC = () => {
   const [games, setGames] = useState<IGame[]>([])
 
   useEffect(() => {
-    if (chessGames && chessGames.length > 0) {
-      setGames(chessGames)
+    if (chessGames) {
+      setGames(
+        chessGames?.filter(
+          (a: IGame) =>
+            a.gameState === 'initialized' || a.gameState === 'inProgress'
+        )
+      )
     }
   }, [chessGames])
+  console.log('games', games)
 
   useEffect(() => {
     if (address) {
@@ -84,7 +90,6 @@ const Home: FC = () => {
     }
     if (socket) {
       if (socket.connected) {
-        console.log('on connect')
         onConnect()
       }
 
@@ -106,10 +111,10 @@ const Home: FC = () => {
         setAddressesHere(members)
       })
 
-      socket.on('currentGames', (games: IGame[]) => {
-        console.log('current games', games)
-        setGames(games)
-      })
+      // socket.on('currentGames', (games: IGame[]) => {
+      //   console.log('current games', games)
+      //   setGames(games)
+      // })
 
       return () => {
         socket.off('gameCenterMembers', () => {
@@ -120,22 +125,17 @@ const Home: FC = () => {
     }
   }, [chessAccount, address, socket])
 
-  const startNewGame = async () => {
-    await createNewGame(wager)
+  const startNewGame = async (gameType: string, opponentAddress?: string) => {
+    await createNewGame(wager, gameType, opponentAddress)
     // setShowCreateModal(false)
     await delay(1000)
     const newGames = await getNewGames()
-    console.log(newGames)
     router.push(`/${newGames[0].gameId}`)
   }
 
   const joinGame = async (gameId: string, address1: string, wager: string) => {
     await acceptGame(gameId, address1, wager)
     // socket?.emit('joinGame', gameId, address1)
-  }
-
-  const viewGame = (gameId: string) => {
-    // socket?.emit('joinGame', gameId, address)
   }
 
   return (
@@ -344,7 +344,7 @@ const Home: FC = () => {
                                           {user1?.username}
                                         </span>
                                         <span className={'text-xs italic'}>
-                                          {truncateString(game.address1!, 10)}
+                                          {truncateString(game.address1!, 16)}
                                         </span>
                                       </span>
                                       <span className={'italic'}>vs</span>
@@ -384,41 +384,39 @@ const Home: FC = () => {
                                         'flex flex-row gap-2 self-start'
                                       }
                                     >
-                                      {!game.address2 && (
-                                        <button
-                                          onClick={() =>
-                                            joinGame(
-                                              game.gameId,
-                                              game.address1!,
-                                              game.wager!
-                                            )
-                                          }
-                                          className={clsx(
-                                            'bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2',
-                                            insufficientFunds
-                                              ? 'bg-red-500'
-                                              : 'bg-green-500'
-                                          )}
-                                          disabled={
-                                            game.address1?.toLowerCase() ===
-                                              address.toLowerCase() ||
-                                            !!game.address2 ||
-                                            isAcceptingGame ||
-                                            insufficientFunds
-                                          }
-                                        >
-                                          {insufficientFunds
-                                            ? 'Insufficient Funds..'
-                                            : isAcceptingGame
-                                              ? 'Joining...'
-                                              : 'Join Game'}
-                                        </button>
-                                      )}
+                                      {!game.address2 ||
+                                        (game.type === 'Closed Game' &&
+                                          game.address2 === address && (
+                                            <button
+                                              onClick={() =>
+                                                joinGame(
+                                                  game.gameId,
+                                                  game.address1!,
+                                                  game.wager!
+                                                )
+                                              }
+                                              className={clsx(
+                                                'bg-green-500 text-white p-2 disabled:opacity-20 rounded mr-2',
+                                                insufficientFunds
+                                                  ? 'bg-red-500'
+                                                  : 'bg-green-500'
+                                              )}
+                                              disabled={
+                                                game.address1?.toLowerCase() ===
+                                                  address.toLowerCase() ||
+                                                isAcceptingGame ||
+                                                insufficientFunds
+                                              }
+                                            >
+                                              {insufficientFunds
+                                                ? 'Insufficient Funds..'
+                                                : isAcceptingGame
+                                                  ? 'Joining...'
+                                                  : 'Join Game'}
+                                            </button>
+                                          ))}
                                       <Link href={`/${game.gameId}`}>
-                                        <button
-                                          onClick={() => viewGame(game.gameId)}
-                                          className="bg-gray-500 text-white hover:opacity-50 transition-all p-2 rounded"
-                                        >
+                                        <button className="bg-gray-500 text-white hover:opacity-50 transition-all p-2 rounded">
                                           Watch
                                         </button>
                                       </Link>

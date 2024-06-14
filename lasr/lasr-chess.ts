@@ -204,21 +204,28 @@ class LasrChess extends Program {
     try {
       const { from } = computeInputs.transaction;
       const txInputs = parseTxInputs(computeInputs);
-      const { wager, type } = txInputs;
+      const { wager, gameType: type, address2 } = txInputs;
       const gameId = generateGameId();
       let createdAt = Date.now();
-      const gameType = type ?? "open";
+      const gameType = type ?? "Open Game";
+      const data = {
+        [`game-${gameId}-fen`]: NEW_GAME_FEN,
+        [`game-${gameId}-address1`]: from,
+        [`game-${gameId}-gameState`]: "initialized",
+        [`game-${gameId}-wager`]: wager,
+        [`game-${gameId}-createdAt`]: createdAt.toString(),
+        [`game-${gameId}-type`]: gameType,
+      };
+
+      if (gameType === "Closed Game") {
+        validate(address2, "missing address2");
+        data[`game-${gameId}-address2`] = address2;
+      }
+
       const updateTokenDataInstruction = updateTokenData({
         accountAddress: from,
         programAddress: THIS,
-        data: {
-          [`game-${gameId}-fen`]: NEW_GAME_FEN,
-          [`game-${gameId}-address1`]: from,
-          [`game-${gameId}-gameState`]: "initialized",
-          [`game-${gameId}-wager`]: wager,
-          [`game-${gameId}-createdAt`]: createdAt.toString(),
-          [`game-${gameId}-type`]: gameType,
-        },
+        data,
       });
       const amountNeededForWager = parseAmountToBigInt(wager ?? "0");
       const transferToProgram = buildTransferInstruction({
